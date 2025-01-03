@@ -12,4 +12,13 @@ export class MenuService {
   async getAllItems(): Promise<MenuItem[]> {
     return this.menuItemModel.find().exec();
   }
+
+  async getItemById(id: string): Promise<MenuItem> {
+    return this.menuItemModel.findById(id).exec();
+  }
+
+  async create(menuItem: Partial<MenuItem>): Promise<MenuItem> {
+    const newItem = new this.menuItemModel(menuItem);
+    return newItem.save();
+  }
 }
