@@ -31,4 +31,8 @@ export class MenuService {
   async delete(id: string): Promise<MenuItem> {
     return this.menuItemModel.findByIdAndDelete(id).exec();
   }
+
+  async deleteAll(): Promise<void> {
+    await this.menuItemModel.deleteMany({}).exec();
+  }
 }
