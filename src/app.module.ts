@@ -5,6 +5,7 @@ import { MenuModule } from './menu/menu.module';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { OrderModule } from './orders/orders.module';
+import { ChatbotModule } from './chatbot/chatbot.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { OrderModule } from './orders/orders.module';
     MongooseModule.forRoot(process.env.MONGO_URI),
     MenuModule,
     OrderModule,
+    ChatbotModule,
   ],
   controllers: [AppController],
   providers: [AppService],
