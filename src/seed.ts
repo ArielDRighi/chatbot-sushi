@@ -30,27 +30,27 @@ async function bootstrap() {
     },
   ];
 
-  // Insertar datos en la colección de menú
+  // Insertar datos en la colección de menú y capturar los IDs generados
+  const insertedMenuItems = [];
   for (const item of menuItems) {
-    await menuService.create(item);
+    const insertedItem = await menuService.create(item);
+    insertedMenuItems.push(insertedItem);
   }
 
-  // Datos de ejemplo para las órdenes
+  // Datos de ejemplo para las órdenes utilizando los IDs generados
   const orders = [
     {
       customerName: 'Juan Pérez',
       items: [
-        { productId: '1', quantity: 2 },
-        { productId: '2', quantity: 1 },
+        { productId: insertedMenuItems[0]._id, quantity: 2 },
+        { productId: insertedMenuItems[1]._id, quantity: 1 },
       ],
-      total: 34.97,
       status: 'completed',
       createdAt: new Date(),
     },
     {
       customerName: 'María López',
-      items: [{ productId: '3', quantity: 3 }],
-      total: 35.97,
+      items: [{ productId: insertedMenuItems[2]._id, quantity: 3 }],
       status: 'pending',
       createdAt: new Date(),
     },

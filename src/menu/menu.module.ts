@@ -12,5 +12,6 @@ import { MenuItem, MenuItemSchema } from './menu.schema';
   ],
   controllers: [MenuController],
   providers: [MenuService],
+  exports: [MongooseModule],
 })
 export class MenuModule {}
