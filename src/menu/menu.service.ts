@@ -21,4 +21,14 @@ export class MenuService {
     const newItem = new this.menuItemModel(menuItem);
     return newItem.save();
   }
+
+  async update(id: string, menuItem: Partial<MenuItem>): Promise<MenuItem> {
+    return this.menuItemModel
+      .findByIdAndUpdate(id, menuItem, { new: true })
+      .exec();
+  }
+
+  async delete(id: string): Promise<MenuItem> {
+    return this.menuItemModel.findByIdAndDelete(id).exec();
+  }
 }
