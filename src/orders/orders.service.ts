@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Order } from './order.schema';
 import { MenuItem } from '../menu/menu.schema';
+import { CreateOrderDto } from './dto/create-order.dto';
 
 @Injectable()
 export class OrderService {
@@ -11,9 +12,9 @@ export class OrderService {
     @InjectModel('MenuItem') private menuItemModel: Model<MenuItem>,
   ) {}
 
-  async create(orderData: Partial<Order>): Promise<Order> {
+  async create(createOrderDto: CreateOrderDto): Promise<Order> {
     const itemsWithPrices = await Promise.all(
-      orderData.items.map(async (item) => {
+      createOrderDto.items.map(async (item) => {
         const menuItem = await this.menuItemModel
           .findById(item.productId)
           .exec();
@@ -35,9 +36,11 @@ export class OrderService {
     );
 
     const order = new this.orderModel({
-      ...orderData,
+      customerName: createOrderDto.customerName,
       items: itemsWithPrices,
       total,
+      status: createOrderDto.status || 'pending',
+      createdAt: createOrderDto.createdAt || new Date(),
     });
 
     return order.save();
@@ -48,16 +51,29 @@ export class OrderService {
   }
 
   async getOrderById(id: string): Promise<Order> {
-    return this.orderModel.findById(id).exec();
+    const order = await this.orderModel.findById(id).exec();
+    if (!order) {
+      throw new NotFoundException(`Order with ID ${id} not found`);
+    }
+    return order;
   }
 
-  async updateOrder(id: string, orderData: Partial<Order>): Promise<Order> {
+  async getActiveOrders(): Promise<Order[]> {
+    const activeStatuses = ['pending', 'in_progress', 'completed'];
+
+    return this.orderModel.find({ status: { $in: activeStatuses } }).exec();
+  }
+
+  async updateOrder(
+    id: string,
+    updateOrderDto: Partial<CreateOrderDto>,
+  ): Promise<Order> {
     let itemsWithPrices = [];
     let total = 0;
 
-    if (orderData.items) {
+    if (updateOrderDto.items) {
       itemsWithPrices = await Promise.all(
-        orderData.items.map(async (item) => {
+        updateOrderDto.items.map(async (item) => {
           const menuItem = await this.menuItemModel
             .findById(item.productId)
             .exec();
@@ -79,20 +95,30 @@ export class OrderService {
       );
     }
 
-    return this.orderModel
+    const updatedOrder = await this.orderModel
       .findByIdAndUpdate(
         id,
         {
-          ...orderData,
-          ...(orderData.items && { items: itemsWithPrices, total }),
+          ...updateOrderDto,
+          ...(updateOrderDto.items && { items: itemsWithPrices, total }),
         },
         { new: true },
       )
       .exec();
+
+    if (!updatedOrder) {
+      throw new NotFoundException(`Order with ID ${id} not found`);
+    }
+
+    return updatedOrder;
   }
 
   async deleteOrder(id: string): Promise<Order> {
-    return this.orderModel.findByIdAndDelete(id).exec();
+    const deletedOrder = await this.orderModel.findByIdAndDelete(id).exec();
+    if (!deletedOrder) {
+      throw new NotFoundException(`Order with ID ${id} not found`);
+    }
+    return deletedOrder;
   }
 
   async deleteAll(): Promise<void> {

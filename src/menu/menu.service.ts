@@ -17,6 +17,16 @@ export class MenuService {
     return this.menuItemModel.findById(id).exec();
   }
 
+  async getItemByName(name: string): Promise<MenuItem | null> {
+    const regex = new RegExp(`^${name}$`, 'i'); // 'i' para hacer la búsqueda insensible a mayúsculas
+    return this.menuItemModel.findOne({ name: regex }).exec();
+  }
+
+  async getItemsByKeyword(keyword: string): Promise<MenuItem[]> {
+    const regex = new RegExp(keyword, 'i'); // 'i' para hacer la búsqueda insensible a mayúsculas
+    return this.menuItemModel.find({ name: regex }).exec();
+  }
+
   async create(menuItem: Partial<MenuItem>): Promise<MenuItem> {
     const newItem = new this.menuItemModel(menuItem);
     return newItem.save();

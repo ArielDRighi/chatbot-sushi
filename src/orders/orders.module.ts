@@ -12,5 +12,6 @@ import { MenuModule } from '../menu/menu.module';
   ],
   controllers: [OrderController],
   providers: [OrderService],
+  exports: [OrderService, MongooseModule],
 })
 export class OrderModule {}
