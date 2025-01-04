@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { OrderService } from './orders.service';
 import { Order } from './order.schema';
+import { CreateOrderDto } from './dto/create-order.dto';
 
 @Controller('orders')
 export class OrderController {
@@ -16,7 +17,7 @@ export class OrderController {
 
   // Endpoint para crear un pedido
   @Post()
-  async createOrder(@Body() orderData: Partial<Order>): Promise<Order> {
+  async createOrder(@Body() orderData: CreateOrderDto): Promise<Order> {
     return this.orderService.create(orderData);
   }
 

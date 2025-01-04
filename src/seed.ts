@@ -58,9 +58,28 @@ async function bootstrap() {
     },
   ];
 
-  // Insertar datos en la colección de órdenes
+  // Calcular el total y crear las órdenes
   for (const order of orders) {
-    await orderService.create(order);
+    const itemsWithPrices = await Promise.all(
+      order.items.map(async (item) => {
+        const menuItem = await menuService.getItemById(item.productId);
+        return {
+          ...item,
+          price: menuItem.price,
+        };
+      }),
+    );
+
+    const total = itemsWithPrices.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0,
+    );
+
+    await orderService.create({
+      ...order,
+      items: itemsWithPrices,
+      total,
+    });
   }
 
   await app.close();
