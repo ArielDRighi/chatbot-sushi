@@ -6,10 +6,23 @@ import {
   Put,
   Delete,
   Param,
+  UseGuards,
 } from '@nestjs/common';
 import { OrderService } from './orders.service';
 import { Order } from './order.schema';
 import { CreateOrderDto } from './dto/create-order.dto';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiParam,
+} from '@nestjs/swagger';
+import { JwtAuthGuard } from 'auth/jwt-auth.guard';
+import { Roles } from 'auth/roles.decorator';
+import { RolesGuard } from 'auth/roles.guard';
+import { UserRole } from 'users/user.roles.enum';
 
 @ApiTags('orders')
 @ApiBearerAuth()
@@ -20,7 +33,7 @@ export class OrderController {
 
   // Endpoint para crear un pedido
   @Post()
-  @Roles(UserRole.USER, UserRole.ADMIN)
+  @Roles(UserRole.CUSTOMER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Create a new order' })
   @ApiResponse({ status: 201, description: 'Order created successfully.' })
   @ApiBody({ type: CreateOrderDto })
@@ -29,7 +42,7 @@ export class OrderController {
   }
 
   @Get()
-  @Roles(UserRole.User, UserRole.ADMIN)
+  @Roles(UserRole.CUSTOMER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Get all orders' })
   @ApiResponse({ status: 200, description: 'Return all orders.' })
   async getAllOrders(): Promise<Order[]> {
@@ -45,7 +58,7 @@ export class OrderController {
   }
 
   @Put(':id')
-  @Roles(UserRole.USER, UserRole.ADMIN)
+  @Roles(UserRole.CUSTOMER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Update an order by ID' })
   @ApiResponse({ status: 200, description: 'Order updated successfully.' })
   @ApiParam({ name: 'id', description: 'The ID of the order' })
@@ -58,7 +71,7 @@ export class OrderController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.USER, UserRole.ADMIN)
+  @Roles(UserRole.CUSTOMER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Delete an order by ID' })
   @ApiResponse({ status: 200, description: 'Order deleted successfully.' })
   @ApiParam({ name: 'id', description: 'The ID of the order' })

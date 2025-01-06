@@ -1,25 +1,47 @@
-import { Schema, Document } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document } from 'mongoose';
+import { ApiProperty } from '@nestjs/swagger';
 
-export interface Order extends Document {
-  customerName: string;
-  items: {
-    productId: string; // ID del producto pedido
-    quantity: number; // Cantidad de ese producto
-  }[];
-  total: number; // Total del pedido
-  status: string; // Estado del pedido (ejemplo: pendiente, completado)
-  createdAt: Date; // Fecha de creación
+class OrderItem {
+  @ApiProperty({
+    example: '60d21b4667d0d8992e610c85',
+    description: 'The ID of the product',
+  })
+  @Prop({ required: true })
+  productId: string;
+
+  @ApiProperty({ example: 2, description: 'The quantity of the product' })
+  @Prop({ required: true })
+  quantity: number;
 }
 
-export const OrderSchema = new Schema<Order>({
-  customerName: { type: String, required: true },
-  items: [
-    {
-      productId: { type: String, required: true },
-      quantity: { type: Number, required: true },
-    },
-  ],
-  total: { type: Number, required: true },
-  status: { type: String, default: 'pending' },
-  createdAt: { type: Date, default: Date.now },
-});
+@Schema()
+export class Order extends Document {
+  @ApiProperty({
+    example: 'Juan Pérez',
+    description: 'The name of the customer',
+  })
+  @Prop({ required: true })
+  customerName: string;
+
+  @ApiProperty({ type: [OrderItem], description: 'The items in the order' })
+  @Prop({ type: [OrderItem], required: true })
+  items: OrderItem[];
+
+  @ApiProperty({ example: 29.97, description: 'The total price of the order' })
+  @Prop({ required: true })
+  total: number;
+
+  @ApiProperty({ example: 'pending', description: 'The status of the order' })
+  @Prop({ default: 'pending' })
+  status: string;
+
+  @ApiProperty({
+    example: '2023-10-01T00:00:00.000Z',
+    description: 'The creation date of the order',
+  })
+  @Prop({ default: Date.now })
+  createdAt: Date;
+}
+
+export const OrderSchema = SchemaFactory.createForClass(Order);
