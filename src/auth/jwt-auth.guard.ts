@@ -22,8 +22,12 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     if (!token) {
       throw new UnauthorizedException('No token provided');
     }
-    const payload = this.jwtService.verify(token);
-    request.user = payload;
+    try {
+      const payload = this.jwtService.verify(token);
+      request.user = payload;
+    } catch (error) {
+      throw new UnauthorizedException('Invalid token');
+    }
     return super.canActivate(context);
   }
 }

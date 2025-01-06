@@ -10,10 +10,10 @@ import {
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto, UpdateUserDto } from './user.dto';
-import { RolesGuard } from 'auth/roles.guard';
 import { Roles } from 'auth/roles.decorator';
 import { UserRole } from './user.roles.enum';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard } from 'auth/jwt-auth.guard';
+import { RolesGuard } from 'auth/roles.guard';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -26,13 +26,11 @@ export class UserController {
   }
 
   @Get()
-  //@Roles(UserRole.ADMIN)
   async getAll() {
     return this.userService.getAllUsers();
   }
 
   @Get(':id')
-  @Roles(UserRole.ADMIN)
   async getOne(@Param('id') id: string) {
     return this.userService.findByEmail(id);
   }
