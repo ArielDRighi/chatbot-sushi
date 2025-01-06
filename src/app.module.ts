@@ -6,6 +6,8 @@ import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { OrderModule } from './orders/orders.module';
 import { ChatbotModule } from './chatbot/chatbot.module';
+import { UsersModule } from './users/user.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -14,6 +16,8 @@ import { ChatbotModule } from './chatbot/chatbot.module';
     MenuModule,
     OrderModule,
     ChatbotModule,
+    UsersModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
