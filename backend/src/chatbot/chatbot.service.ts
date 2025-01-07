@@ -86,11 +86,20 @@ export class ChatbotService {
         .join('\n');
     }
 
-    if (normalizedMessage.includes('horarios')) {
+    if (
+      normalizedMessage.includes('horarios') ||
+      normalizedMessage.includes('horario') ||
+      normalizedMessage.includes('abierto') ||
+      normalizedMessage.includes('cerrado')
+    ) {
       return 'Estamos abiertos de lunes a domingo, de 12:00 a 22:00.';
     }
 
     return 'Lo siento, no entendí tu mensaje. Por favor, intenta de nuevo.';
+  }
+
+  async getMenuItems(): Promise<any[]> {
+    return this.menuService.getAllItems();
   }
 
   private formatMenuResponse(menuItems: any[]): string {
