@@ -12,12 +12,16 @@ export class ChatbotService {
   async handleMessage(message: string): Promise<string> {
     const normalizedMessage = message.toLowerCase();
 
+    if (normalizedMessage.includes('hola')) {
+      return '👋 ¡Hola! Esta es una prueba técnica para la empresa Nular. ¡Saludos a todo el equipo!';
+    }
+
     if (
       normalizedMessage.includes('menú') ||
       normalizedMessage.includes('menu')
     ) {
       const menuItems = await this.menuService.getAllItems();
-      return `A continuación te presento el menú:\n${this.formatMenuResponse(menuItems)}`;
+      return `🍣 A continuación te presento el menú:\n${this.formatMenuResponse(menuItems)}`;
     }
 
     if (
@@ -53,7 +57,7 @@ export class ChatbotService {
         status: 'pending',
       });
 
-      return `Tu orden ha sido registrada. Total: $${order.total}. ¡Gracias por tu pedido!`;
+      return `✅ Tu orden ha sido registrada. Total: <b>$${total.toFixed(2)}</b>. ¡Gracias por tu pedido!`;
     }
 
     if (
@@ -65,7 +69,7 @@ export class ChatbotService {
         return 'No tienes órdenes en proceso.';
       }
 
-      return `Aquí tienes el estado de tus órdenes:\n${activeOrders
+      return `📦 Aquí tienes el estado de tus órdenes:\n${activeOrders
         .map((order) =>
           order.items
             .map(
@@ -77,16 +81,18 @@ export class ChatbotService {
         .join('\n')}`;
     }
 
-    if (normalizedMessage.includes('recomendar')) {
-      const keyword = normalizedMessage.replace('recomendar', '').trim();
-      const recommendations = await this.menuService.getItemsByKeyword(keyword);
+    if (
+      normalizedMessage.includes('recomendar') ||
+      normalizedMessage.includes('recomendación') ||
+      normalizedMessage.includes('recomiendas') ||
+      normalizedMessage.includes('que me recomiendas')
+    ) {
+      const recommendations = await this.menuService.getAllItems();
       if (recommendations.length === 0) {
-        return `No encontré platos relacionados con "${keyword}". ¿Quieres buscar algo más?`;
+        return `No encontré platos para recomendar. ¿Quieres buscar algo más?`;
       }
 
-      return `Aquí tienes algunas recomendaciones:\n${recommendations
-        .map((item) => `${item.name}: $${item.price} - ${item.description}`)
-        .join('\n')}`;
+      return `🔍 Aquí tienes algunas recomendaciones:\n${this.formatMenuResponse(recommendations)}`;
     }
 
     if (
@@ -95,10 +101,21 @@ export class ChatbotService {
       normalizedMessage.includes('abierto') ||
       normalizedMessage.includes('cerrado')
     ) {
-      return 'Estamos abiertos de lunes a domingo, de 12:00 a 22:00.';
+      return '🕒 Estamos abiertos de lunes a domingo, de 12:00 a 22:00.';
     }
 
-    return 'Lo siento, no entendí tu mensaje. Por favor, intenta de nuevo.';
+    if (normalizedMessage.includes('gracias')) {
+      return '🙏 ¡De nada! Si tienes alguna otra pregunta, no dudes en preguntar.';
+    }
+
+    if (
+      normalizedMessage.includes('adiós') ||
+      normalizedMessage.includes('chau')
+    ) {
+      return '👋 ¡Adiós! ¡Que tengas un excelente día!';
+    }
+
+    return 'Lo siento, no entendí tu mensaje. Puedes intentar con: "Mostrar menú" o "¿Qué me recomiendas?".';
   }
 
   async getMenuItems(): Promise<any[]> {
@@ -110,7 +127,10 @@ export class ChatbotService {
       return 'El menú está vacío por el momento.';
     }
     return menuItems
-      .map((item) => `${item.name}: $${item.price} - ${item.description}`)
+      .map(
+        (item) =>
+          `<div><b>${item.name}</b>: $${item.price} - ${item.description}</div>`,
+      )
       .join('\n');
   }
 
@@ -123,5 +143,12 @@ export class ChatbotService {
       quantity: parseInt(match[1], 10),
       itemName: match[2].trim(),
     }));
+  }
+
+  private normalizeText(text: string): string {
+    return text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, ''); // Eliminar tildes
   }
 }

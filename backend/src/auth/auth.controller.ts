@@ -1,7 +1,11 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignUpDto, SignInDto } from './dto/auth.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { JwtAuthGuard } from './jwt-auth.guard';
+import { RolesGuard } from './roles.guard';
+import { Roles } from './roles.decorator';
+import { UserRole } from '../users/user.roles.enum';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -22,5 +26,15 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   async signin(@Body() signInDto: SignInDto) {
     return this.authService.signin(signInDto);
+  }
+
+  @Post('protected')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Protected route' })
+  @ApiResponse({ status: 200, description: 'Access granted.' })
+  @ApiResponse({ status: 403, description: 'Forbidden.' })
+  async protectedRoute() {
+    return { message: 'You have access to this route.' };
   }
 }
