@@ -26,7 +26,6 @@ import { UserRole } from 'users/user.roles.enum';
 
 @ApiTags('orders')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('orders')
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
@@ -34,6 +33,7 @@ export class OrderController {
   // Endpoint para crear un pedido
   @Post()
   @Roles(UserRole.CUSTOMER, UserRole.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiOperation({ summary: 'Create a new order' })
   @ApiResponse({ status: 201, description: 'Order created successfully.' })
   @ApiBody({ type: CreateOrderDto })
@@ -43,6 +43,7 @@ export class OrderController {
 
   @Get()
   @Roles(UserRole.CUSTOMER, UserRole.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiOperation({ summary: 'Get all orders' })
   @ApiResponse({ status: 200, description: 'Return all orders.' })
   async getAllOrders(): Promise<Order[]> {
@@ -72,6 +73,7 @@ export class OrderController {
 
   @Delete(':id')
   @Roles(UserRole.CUSTOMER, UserRole.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiOperation({ summary: 'Delete an order by ID' })
   @ApiResponse({ status: 200, description: 'Order deleted successfully.' })
   @ApiParam({ name: 'id', description: 'The ID of the order' })

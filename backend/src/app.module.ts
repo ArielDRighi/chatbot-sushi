@@ -7,6 +7,7 @@ import { ChatbotModule } from './chatbot/chatbot.module';
 import { UsersModule } from './users/user.module';
 import { AuthModule } from './auth/auth.module';
 import { NormalizeMiddleware } from '../middleware/normalize.middleware';
+import { DebugMiddleware } from '../middleware/debug.middleware';
 
 @Module({
   imports: [
@@ -26,5 +27,7 @@ export class AppModule {
     consumer
       .apply(NormalizeMiddleware)
       .forRoutes({ path: 'chatbot', method: RequestMethod.POST });
+
+    consumer.apply(DebugMiddleware).forRoutes('*'); // Esto aplica el middleware en todas las rutas
   }
 }

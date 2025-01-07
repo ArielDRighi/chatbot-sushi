@@ -5,43 +5,41 @@ const App: React.FC = () => {
   const [message, setMessage] = useState("");
   const [chat, setChat] = useState<{ sender: string; text: string }[]>([]);
   const [menuItems, setMenuItems] = useState<any[]>([]);
+  const [isTyping, setIsTyping] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setChat([...chat, { sender: "user", text: message }]);
-    setMenuItems([]); // Limpiar el estado del menú antes de realizar la solicitud
+    if (!message.trim()) return;
+
+    setChat((prevChat) => [...prevChat, { sender: "user", text: message }]);
+    setMenuItems([]);
+    setIsTyping(true);
+
     try {
       const res = await fetch("http://localhost:3000/chatbot", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message }),
       });
-      if (!res.ok) {
-        throw new Error("Network response was not ok");
-      }
+
+      if (!res.ok) throw new Error("Network response was not ok");
+
       const data = await res.json();
 
-      // Si la respuesta contiene elementos del menú, actualiza el estado del menú
       if (data.menuItems) {
         setMenuItems(data.menuItems);
-        setChat([
-          ...chat,
-          { sender: "user", text: message },
-          { sender: "bot", text: "A continuación te presento el menú:" },
-        ]);
+        setChat((prevChat) => [...prevChat, { sender: "bot", text: "🍣 A continuación te presento el menú:" }]);
       } else {
-        setChat([...chat, { sender: "user", text: message }, { sender: "bot", text: data.response }]);
-        setMenuItems([]); // Limpiar el menú si no hay elementos del menú
+        setChat((prevChat) => [...prevChat, { sender: "bot", text: data.response }]);
       }
     } catch (error) {
-      console.error("Failed to fetch:", error);
-      setChat([...chat, { sender: "user", text: message }, { sender: "bot", text: "Error: Failed to fetch" }]);
-      setMenuItems([]);
+      console.error("Error al enviar el mensaje:", error);
+      setChat((prevChat) => [...prevChat, { sender: "bot", text: "Error al conectar con el servidor." }]);
+    } finally {
+      setMessage("");
+      setIsTyping(false);
     }
-    setMessage(""); // Limpiar el cuadro de texto
   };
 
   useEffect(() => {
@@ -55,18 +53,19 @@ const App: React.FC = () => {
         <div className="chat-container">
           <div className="chat-box">
             {chat.map((msg, index) => (
-              <div key={index} className={`chat-message ${msg.sender}`}>
-                {msg.text}
+              <div key={index} className={`chat-message ${msg.sender === "user" ? "user" : "bot"}`}>
+                <span dangerouslySetInnerHTML={{ __html: msg.text }} />
               </div>
             ))}
+            {isTyping && <div className="chat-message bot">Chatbot está escribiendo...</div>}
             <div ref={chatEndRef} />
           </div>
-          <form onSubmit={handleSubmit}>
+          <form className="chat-form" onSubmit={handleSubmit}>
             <input
               type="text"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Escribe tu mensaje"
+              placeholder="Escribe tu mensaje..."
             />
             <button type="submit">Enviar</button>
           </form>
@@ -78,7 +77,9 @@ const App: React.FC = () => {
                 <h3>{item.name}</h3>
                 <p>{item.description}</p>
                 <p>Precio: ${item.price}</p>
-                <p>{item.available ? "Disponible" : "No disponible"}</p>
+                <p className={item.available ? "available" : "not-available"}>
+                  {item.available ? "Disponible" : "No disponible"}
+                </p>
               </div>
             ))}
           </div>

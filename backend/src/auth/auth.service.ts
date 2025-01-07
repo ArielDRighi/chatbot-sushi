@@ -9,7 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../users/user.service';
 import { SignUpDto, SignInDto } from './dto/auth.dto';
 import * as bcrypt from 'bcrypt';
-import { UserRole } from 'users/user.roles.enum';
+import { UserRole } from '../users/user.roles.enum';
 
 @Injectable()
 export class AuthService {
@@ -25,7 +25,7 @@ export class AuthService {
     // Verificar si el usuario ya existe
     let existingUser;
     try {
-      existingUser = await this.userService.findByEmail(email);
+      existingUser = await this.userService.findOneByEmail(email);
     } catch (error) {
       if (error instanceof NotFoundException) {
         existingUser = null;
@@ -51,7 +51,7 @@ export class AuthService {
     const { email, password } = signInDto;
 
     // Buscar el usuario por correo
-    const user = await this.userService.findByEmail(email);
+    const user = await this.userService.findOneByEmail(email);
     if (!user) {
       throw new UnauthorizedException('Invalid email or password.');
     }

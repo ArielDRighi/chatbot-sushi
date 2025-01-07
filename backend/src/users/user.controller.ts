@@ -25,7 +25,6 @@ import { RolesGuard } from 'auth/roles.guard';
 
 @ApiTags('users')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
@@ -39,6 +38,8 @@ export class UserController {
   }
 
   @Get()
+  @Roles(UserRole.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiOperation({ summary: 'Get all users' })
   @ApiResponse({ status: 200, description: 'Return all users.' })
   async getAll() {
@@ -50,11 +51,12 @@ export class UserController {
   @ApiResponse({ status: 200, description: 'Return a user.' })
   @ApiParam({ name: 'id', description: 'The ID of the user' })
   async getOne(@Param('id') id: string) {
-    return this.userService.findByEmail(id);
+    return this.userService.findOneByEmail(id);
   }
 
   @Put(':id')
   @Roles(UserRole.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiOperation({ summary: 'Update a user by ID' })
   @ApiResponse({ status: 200, description: 'User updated successfully.' })
   @ApiParam({ name: 'id', description: 'The ID of the user' })
@@ -66,6 +68,7 @@ export class UserController {
 
   @Delete(':id')
   @Roles(UserRole.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiOperation({ summary: 'Delete a user by ID' })
   @ApiResponse({ status: 200, description: 'User deleted successfully.' })
   @ApiParam({ name: 'id', description: 'The ID of the user' })
