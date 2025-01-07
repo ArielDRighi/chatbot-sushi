@@ -17,7 +17,7 @@ export class ChatbotService {
       normalizedMessage.includes('menu')
     ) {
       const menuItems = await this.menuService.getAllItems();
-      return this.formatMenuResponse(menuItems);
+      return `A continuación te presento el menú:\n${this.formatMenuResponse(menuItems)}`;
     }
 
     if (
@@ -26,31 +26,34 @@ export class ChatbotService {
       normalizedMessage.includes('quiero')
     ) {
       const orderDetails = this.extractOrderDetails(message);
-      if (!orderDetails) {
+      if (!orderDetails || orderDetails.length === 0) {
         return 'Por favor, especifica qué deseas ordenar. Ejemplo: "Quiero 2 sushi de salmón".';
       }
 
-      const menuItem = await this.menuService.getItemByName(
-        orderDetails.itemName,
-      );
-      if (!menuItem) {
-        return `Lo siento, no encontré un plato llamado "${orderDetails.itemName}". Por favor, verifica el menú.`;
+      const items = [];
+      let total = 0;
+
+      for (const detail of orderDetails) {
+        const menuItem = await this.menuService.getItemByName(detail.itemName);
+        if (!menuItem) {
+          return `Lo siento, no encontré un plato llamado "${detail.itemName}". Por favor, verifica el menú.`;
+        }
+        items.push({
+          productId: menuItem._id.toString(),
+          quantity: detail.quantity,
+        });
+        total += menuItem.price * detail.quantity;
       }
 
       // Crear una orden compatible con el esquema de MongoDB
       const order = await this.orderService.create({
         customerName: 'Cliente Anónimo', // Esto debería obtenerse dinámicamente si es posible
-        items: [
-          {
-            productId: menuItem._id.toString(),
-            quantity: orderDetails.quantity,
-          },
-        ],
-        total: menuItem.price * orderDetails.quantity,
+        items,
+        total,
         status: 'pending',
       });
 
-      return `Tu orden de ${order.items[0].quantity} ${menuItem.name} ha sido registrada. Total: $${order.total}. ¡Gracias por tu pedido!`;
+      return `Tu orden ha sido registrada. Total: $${order.total}. ¡Gracias por tu pedido!`;
     }
 
     if (
@@ -62,7 +65,7 @@ export class ChatbotService {
         return 'No tienes órdenes en proceso.';
       }
 
-      return activeOrders
+      return `Aquí tienes el estado de tus órdenes:\n${activeOrders
         .map((order) =>
           order.items
             .map(
@@ -71,7 +74,7 @@ export class ChatbotService {
             )
             .join('\n'),
         )
-        .join('\n');
+        .join('\n')}`;
     }
 
     if (normalizedMessage.includes('recomendar')) {
@@ -81,16 +84,25 @@ export class ChatbotService {
         return `No encontré platos relacionados con "${keyword}". ¿Quieres buscar algo más?`;
       }
 
-      return recommendations
+      return `Aquí tienes algunas recomendaciones:\n${recommendations
         .map((item) => `${item.name}: $${item.price} - ${item.description}`)
-        .join('\n');
+        .join('\n')}`;
     }
 
-    if (normalizedMessage.includes('horarios')) {
+    if (
+      normalizedMessage.includes('horarios') ||
+      normalizedMessage.includes('horario') ||
+      normalizedMessage.includes('abierto') ||
+      normalizedMessage.includes('cerrado')
+    ) {
       return 'Estamos abiertos de lunes a domingo, de 12:00 a 22:00.';
     }
 
     return 'Lo siento, no entendí tu mensaje. Por favor, intenta de nuevo.';
+  }
+
+  async getMenuItems(): Promise<any[]> {
+    return this.menuService.getAllItems();
   }
 
   private formatMenuResponse(menuItems: any[]): string {
@@ -104,15 +116,12 @@ export class ChatbotService {
 
   private extractOrderDetails(
     message: string,
-  ): { itemName: string; quantity: number } | null {
-    const orderRegex = /quiero\s+(\d+)\s+(.+)/i; // Ejemplo: "Quiero 2 sushi de salmón"
-    const match = orderRegex.exec(message);
-    if (!match) {
-      return null;
-    }
-
-    const quantity = parseInt(match[1], 10);
-    const itemName = match[2].trim();
-    return { itemName, quantity };
+  ): { itemName: string; quantity: number }[] {
+    const orderRegex = /quiero\s+(\d+)\s+(.+?)(?=\s+y\s+|$)/gi; // Ejemplo: "Quiero 2 sushi de salmón y 1 sushi de atún"
+    const matches = [...message.matchAll(orderRegex)];
+    return matches.map((match) => ({
+      quantity: parseInt(match[1], 10),
+      itemName: match[2].trim(),
+    }));
   }
 }

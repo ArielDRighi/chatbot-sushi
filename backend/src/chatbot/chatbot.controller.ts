@@ -12,8 +12,12 @@ export class ChatbotController {
   @ApiBody({ schema: { example: { message: 'Quiero 2 sushi de salmón' } } })
   async handleMessage(
     @Body('message') message: string,
-  ): Promise<{ response: string }> {
+  ): Promise<{ response: string; menuItems?: any[] }> {
     const response = await this.chatbotService.handleMessage(message);
+    if (message.toLowerCase().includes('menu')) {
+      const menuItems = await this.chatbotService.getMenuItems();
+      return { response, menuItems };
+    }
     return { response };
   }
 }
