@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
 import { MenuModule } from './menu/menu.module';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -6,6 +6,7 @@ import { OrderModule } from './orders/orders.module';
 import { ChatbotModule } from './chatbot/chatbot.module';
 import { UsersModule } from './users/user.module';
 import { AuthModule } from './auth/auth.module';
+import { NormalizeMiddleware } from '../middleware/normalize.middleware';
 
 @Module({
   imports: [
@@ -20,4 +21,10 @@ import { AuthModule } from './auth/auth.module';
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(NormalizeMiddleware)
+      .forRoutes({ path: 'chatbot', method: RequestMethod.POST });
+  }
+}

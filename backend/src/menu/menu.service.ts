@@ -18,8 +18,12 @@ export class MenuService {
   }
 
   async getItemByName(name: string): Promise<MenuItem | null> {
-    const regex = new RegExp(`^${name}$`, 'i'); // 'i' para hacer la búsqueda insensible a mayúsculas
-    return this.menuItemModel.findOne({ name: regex }).exec();
+    const normalizedName = this.normalizeText(name);
+    const regex = new RegExp(`^${normalizedName}$`, 'i'); // 'i' para hacer la búsqueda insensible a mayúsculas
+    const items = await this.menuItemModel.find().exec();
+    return (
+      items.find((item) => this.normalizeText(item.name).match(regex)) || null
+    );
   }
 
   async getItemsByKeyword(keyword: string): Promise<MenuItem[]> {
@@ -44,5 +48,12 @@ export class MenuService {
 
   async deleteAll(): Promise<void> {
     await this.menuItemModel.deleteMany({}).exec();
+  }
+
+  private normalizeText(text: string): string {
+    return text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, ''); // Eliminar tildes
   }
 }
