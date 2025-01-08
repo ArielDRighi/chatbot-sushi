@@ -14,6 +14,6 @@ export class NormalizeMiddleware implements NestMiddleware {
     return text
       .toLowerCase()
       .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, ''); // Eliminar tildes
+      .replace(/[\u0300-\u036f]/g, '');
   }
 }
