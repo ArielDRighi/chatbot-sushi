@@ -1,15 +1,27 @@
 import { Injectable } from '@nestjs/common';
 import { MenuService } from '../menu/menu.service';
 import { OrderService } from '../orders/orders.service';
+import { JwtService } from '@nestjs/jwt';
+import { UserService } from 'users/user.service';
 
 @Injectable()
 export class ChatbotService {
   constructor(
     private readonly menuService: MenuService,
     private readonly orderService: OrderService,
+    private readonly jwtService: JwtService,
+    private readonly userService: UserService,
   ) {}
 
-  async handleMessage(message: string): Promise<string> {
+  async handleMessage(message: string, token: string): Promise<string> {
+    let user;
+    try {
+      const decoded = this.jwtService.verify(token);
+      user = await this.userService.findOneById(decoded.sub);
+    } catch (error) {
+      return 'Por favor, inicia sesión o crea una cuenta para realizar un pedido.';
+    }
+
     try {
       const normalizedMessage = this.normalizeMessage(message);
 

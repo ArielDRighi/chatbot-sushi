@@ -20,9 +20,11 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { UserRole } from 'users/user.roles.enum';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @ApiTags('orders')
 @ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('orders')
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
@@ -68,5 +70,13 @@ export class OrderController {
   @ApiParam({ name: 'id', description: 'The ID of the order' })
   async deleteOrder(@Param('id') id: string): Promise<Order> {
     return this.orderService.deleteOrder(id);
+  }
+
+  @Delete(':id/cancel')
+  @ApiOperation({ summary: 'Cancel an order by ID' })
+  @ApiResponse({ status: 200, description: 'Order canceled successfully.' })
+  @ApiParam({ name: 'id', description: 'The ID of the order' })
+  async cancelOrder(@Param('id') id: string): Promise<Order> {
+    return this.orderService.updateOrder(id, { status: 'canceled' });
   }
 }

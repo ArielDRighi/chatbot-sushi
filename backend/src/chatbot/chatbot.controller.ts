@@ -13,7 +13,8 @@ export class ChatbotController {
   async handleMessage(
     @Body('message') message: string,
   ): Promise<{ response: string; menuItems?: any[] }> {
-    const response = await this.chatbotService.handleMessage(message);
+    const token = 'your_token_here';
+    const response = await this.chatbotService.handleMessage(message, token);
     if (message.toLowerCase().includes('menu')) {
       const menuItems = await this.chatbotService.getMenuItems();
       return { response, menuItems };
