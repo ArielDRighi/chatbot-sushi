@@ -46,7 +46,7 @@ export class UserController {
   @ApiResponse({ status: 200, description: 'Return a user.' })
   @ApiParam({ name: 'id', description: 'The ID of the user' })
   async getOne(@Param('id') id: string) {
-    return this.userService.findOneByEmail(id);
+    return this.userService.findOneById(id);
   }
 
   @Put(':id')
