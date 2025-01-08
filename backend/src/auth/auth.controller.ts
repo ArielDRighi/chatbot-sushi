@@ -2,9 +2,6 @@ import { Controller, Post, Body, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignUpDto, SignInDto } from './dto/auth.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { JwtAuthGuard } from './jwt-auth.guard';
-import { RolesGuard } from './roles.guard';
-import { Roles } from './roles.decorator';
 import { UserRole } from '../users/user.roles.enum';
 
 @ApiTags('auth')
@@ -29,8 +26,6 @@ export class AuthController {
   }
 
   @Post('protected')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Protected route' })
   @ApiResponse({ status: 200, description: 'Access granted.' })
   @ApiResponse({ status: 403, description: 'Forbidden.' })

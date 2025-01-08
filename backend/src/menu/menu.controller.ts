@@ -10,10 +10,8 @@ import {
 } from '@nestjs/common';
 import { MenuService } from './menu.service';
 import { MenuItem } from './menu.schema';
-import { RolesGuard } from 'auth/roles.guard';
-import { Roles } from 'auth/roles.decorator';
 import { UserRole } from 'users/user.roles.enum';
-import { JwtAuthGuard } from 'auth/jwt-auth.guard';
+
 import {
   ApiTags,
   ApiBearerAuth,
@@ -25,7 +23,6 @@ import {
 
 @ApiTags('menu')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('menu')
 export class MenuController {
   constructor(private readonly menuService: MenuService) {}
@@ -45,7 +42,6 @@ export class MenuController {
   }
 
   @Post()
-  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Create a new menu item' })
   @ApiResponse({ status: 201, description: 'Menu item created successfully.' })
   @ApiBody({ type: MenuItem })
@@ -54,7 +50,6 @@ export class MenuController {
   }
 
   @Put(':id')
-  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Update a menu item by ID' })
   @ApiResponse({ status: 200, description: 'Menu item updated successfully.' })
   @ApiParam({ name: 'id', description: 'The ID of the menu item' })
@@ -64,7 +59,6 @@ export class MenuController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Delete a menu item by ID' })
   @ApiResponse({ status: 200, description: 'Menu item deleted successfully.' })
   @ApiParam({ name: 'id', description: 'The ID of the menu item' })

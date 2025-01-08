@@ -49,9 +49,8 @@ export class ChatbotService {
         total += menuItem.price * detail.quantity;
       }
 
-      // Crear una orden compatible con el esquema de MongoDB
       const order = await this.orderService.create({
-        customerName: 'Cliente Anónimo', // Esto debería obtenerse dinámicamente si es posible
+        customerName: 'Cliente Anónimo',
         items,
         total,
         status: 'pending',
@@ -137,7 +136,7 @@ export class ChatbotService {
   private extractOrderDetails(
     message: string,
   ): { itemName: string; quantity: number }[] {
-    const orderRegex = /quiero\s+(\d+)\s+(.+?)(?=\s+y\s+|$)/gi; // Ejemplo: "Quiero 2 sushi de salmón y 1 sushi de atún"
+    const orderRegex = /quiero\s+(\d+)\s+(.+?)(?=\s+y\s+|$)/gi;
     const matches = [...message.matchAll(orderRegex)];
     return matches.map((match) => ({
       quantity: parseInt(match[1], 10),
@@ -149,6 +148,6 @@ export class ChatbotService {
     return text
       .toLowerCase()
       .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, ''); // Eliminar tildes
+      .replace(/[\u0300-\u036f]/g, '');
   }
 }

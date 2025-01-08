@@ -10,7 +10,6 @@ export class DebugMiddleware implements NestMiddleware {
     console.log('Headers:', req.headers);
     console.log('Body:', req.body);
 
-    // Llamar a la siguiente función en la cadena de middleware
     next();
   }
 }

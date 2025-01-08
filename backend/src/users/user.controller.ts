@@ -18,10 +18,7 @@ import {
 } from '@nestjs/swagger';
 import { UserService } from './user.service';
 import { CreateUserDto, UpdateUserDto } from '../users/dto/user.dto';
-import { Roles } from 'auth/roles.decorator';
 import { UserRole } from './user.roles.enum';
-import { JwtAuthGuard } from 'auth/jwt-auth.guard';
-import { RolesGuard } from 'auth/roles.guard';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -38,8 +35,6 @@ export class UserController {
   }
 
   @Get()
-  @Roles(UserRole.ADMIN)
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiOperation({ summary: 'Get all users' })
   @ApiResponse({ status: 200, description: 'Return all users.' })
   async getAll() {
@@ -55,20 +50,15 @@ export class UserController {
   }
 
   @Put(':id')
-  @Roles(UserRole.ADMIN)
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiOperation({ summary: 'Update a user by ID' })
   @ApiResponse({ status: 200, description: 'User updated successfully.' })
   @ApiParam({ name: 'id', description: 'The ID of the user' })
   @ApiBody({ type: UpdateUserDto })
-  @Roles(UserRole.ADMIN)
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.userService.update(id, updateUserDto);
   }
 
   @Delete(':id')
-  @Roles(UserRole.ADMIN)
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiOperation({ summary: 'Delete a user by ID' })
   @ApiResponse({ status: 200, description: 'User deleted successfully.' })
   @ApiParam({ name: 'id', description: 'The ID of the user' })
