@@ -1,4 +1,4 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Headers } from '@nestjs/common';
 import { ChatbotService } from './chatbot.service';
 import { ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 
@@ -12,8 +12,10 @@ export class ChatbotController {
   @ApiBody({ schema: { example: { message: 'Quiero 2 sushi de salmón' } } })
   async handleMessage(
     @Body('message') message: string,
+    @Headers('authorization') authHeader: string,
   ): Promise<{ response: string; menuItems?: any[] }> {
-    const response = await this.chatbotService.handleMessage(message);
+    const token = authHeader?.split(' ')[1]; // Extraer el token del encabezado
+    const response = await this.chatbotService.handleMessage(message, token);
     if (message.toLowerCase().includes('menu')) {
       const menuItems = await this.chatbotService.getMenuItems();
       return { response, menuItems };

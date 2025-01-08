@@ -3,12 +3,15 @@ import { ChatbotService } from './chatbot.service';
 import { ChatbotController } from './chatbot.controller';
 import { MenuModule } from '../menu/menu.module';
 import { OrderModule } from '../orders/orders.module';
-import { OrderService } from 'src/orders/orders.service';
-import { MenuService } from 'src/menu/menu.service';
+import { OrderService } from '../orders/orders.service';
+import { MenuService } from '../menu/menu.service';
+import { UserService } from '../users/user.service';
+import { AuthModule } from '../auth/auth.module';
+import { UsersModule } from 'users/user.module';
 
 @Module({
-  imports: [MenuModule, OrderModule],
+  imports: [MenuModule, OrderModule, AuthModule, UsersModule],
   controllers: [ChatbotController],
-  providers: [ChatbotService, OrderService, MenuService],
+  providers: [ChatbotService, OrderService, MenuService, UserService],
 })
 export class ChatbotModule {}

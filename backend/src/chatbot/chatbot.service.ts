@@ -1,22 +1,28 @@
 import { Injectable } from '@nestjs/common';
 import { MenuService } from '../menu/menu.service';
 import { OrderService } from '../orders/orders.service';
+import { JwtService } from '@nestjs/jwt';
+import { UserService } from 'users/user.service';
 
 @Injectable()
 export class ChatbotService {
   constructor(
     private readonly menuService: MenuService,
     private readonly orderService: OrderService,
+    private readonly jwtService: JwtService,
+    private readonly userService: UserService,
   ) {}
 
-  async handleMessage(message: string): Promise<string> {
+  async handleMessage(message: string, token: string): Promise<string> {
     try {
       const normalizedMessage = this.normalizeMessage(message);
 
+      // Respuesta para "hola"
       if (normalizedMessage.includes('hola')) {
         return '👋 ¡Hola! Esta es una prueba técnica para la empresa Nular. ¡Saludos a todo el equipo!';
       }
 
+      // Respuesta para "menu" o "menú"
       if (
         normalizedMessage.includes('menu') ||
         normalizedMessage.includes('menú')
@@ -25,11 +31,30 @@ export class ChatbotService {
         return `🍣 A continuación te presento el menú:\n${this.formatMenuResponse(menuItems)}`;
       }
 
+      // Requiere token solo para realizar una orden
       if (
         normalizedMessage.includes('orden') ||
         normalizedMessage.includes('pedido') ||
         normalizedMessage.includes('quiero')
       ) {
+        let user;
+        try {
+          if (!token) {
+            return 'Por favor, inicia sesión o crea una cuenta para realizar un pedido.';
+          }
+
+          const decoded = this.jwtService.verify(token);
+          console.log('Decoded token:', decoded); // Para depurar
+
+          user = await this.userService.findOneById(decoded.sub);
+          if (!user) {
+            return 'Usuario no encontrado. Por favor, inicia sesión nuevamente.';
+          }
+        } catch (error) {
+          console.error('Error al verificar el token:', error.message);
+          return 'Por favor, inicia sesión o crea una cuenta para realizar un pedido.';
+        }
+
         const orderDetails = this.extractOrderDetails(normalizedMessage);
         if (!orderDetails || orderDetails.length === 0) {
           return 'Por favor, especifica qué deseas ordenar. Ejemplo: "Quiero 2 sushi de salmón".';
@@ -53,7 +78,7 @@ export class ChatbotService {
         }
 
         const order = await this.orderService.create({
-          customerName: 'Cliente Anónimo',
+          customerName: user.name || 'Cliente Anónimo',
           items,
           total,
           status: 'pending',
@@ -62,6 +87,7 @@ export class ChatbotService {
         return `✅ Tu orden ha sido registrada. Total: <b>$${total.toFixed(2)}</b>. ¡Gracias por tu pedido!`;
       }
 
+      // Respuesta para "estado de mi orden" o "seguimiento"
       if (
         normalizedMessage.includes('estado de mi orden') ||
         normalizedMessage.includes('seguimiento')
@@ -83,6 +109,7 @@ export class ChatbotService {
           .join('\n')}`;
       }
 
+      // Respuesta para recomendaciones
       if (
         normalizedMessage.includes('recomendar') ||
         normalizedMessage.includes('recomendacion') ||
@@ -97,6 +124,7 @@ export class ChatbotService {
         return `🔍 Aquí tienes algunas recomendaciones:\n${this.formatMenuResponse(recommendations)}`;
       }
 
+      // Respuesta para horarios
       if (
         normalizedMessage.includes('horarios') ||
         normalizedMessage.includes('horario') ||
@@ -106,10 +134,12 @@ export class ChatbotService {
         return '🕒 Estamos abiertos de lunes a domingo, de 12:00 a 22:00.';
       }
 
+      // Respuesta para agradecimientos
       if (normalizedMessage.includes('gracias')) {
         return '🙏 ¡De nada! Si tienes alguna otra pregunta, no dudes en preguntar.';
       }
 
+      // Respuesta para despedida
       if (
         normalizedMessage.includes('adios') ||
         normalizedMessage.includes('chau')
@@ -117,6 +147,7 @@ export class ChatbotService {
         return '👋 ¡Adiós! ¡Que tengas un excelente día!';
       }
 
+      // Respuesta predeterminada
       return 'Lo siento, no entendí tu mensaje. Puedes intentar con: "Mostrar menú" o "¿Qué me recomiendas?".';
     } catch (error) {
       console.error('Error handling message:', error);

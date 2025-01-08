@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from './user.schema';
@@ -17,6 +21,7 @@ export class UserService {
     try {
       const { password } = createUserDto;
       const hashedPassword = await this.hashPassword(password);
+      console.log('Hashed Password during creation:', hashedPassword); // Agrega este log
       const user = new this.userModel({
         ...createUserDto,
         password: hashedPassword,
@@ -28,16 +33,16 @@ export class UserService {
     }
   }
 
-  async findOneByEmail(email: string): Promise<User> {
+  async findOneByEmail(email: string): Promise<User | null> {
     try {
       const user = await this.userModel.findOne({ email }).exec();
-      if (!user) {
-        throw new NotFoundException('User not found');
+      if (user) {
+        console.log('Stored Hashed Password:', user.password); // Agrega este log
       }
-      return user;
+      return user || null; // Si no se encuentra el usuario, retornamos null.
     } catch (error) {
       console.error(`Error fetching user by email ${email}:`, error);
-      throw new Error('Error fetching user by email. Please try again later.');
+      throw new InternalServerErrorException('Error fetching user by email');
     }
   }
 
