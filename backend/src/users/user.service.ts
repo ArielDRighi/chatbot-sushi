@@ -14,44 +14,81 @@ export class UserService {
   }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
-    const { password } = createUserDto;
-
-    const hashedPassword = await this.hashPassword(password);
-
-    const user = new this.userModel({
-      ...createUserDto,
-      password: hashedPassword,
-    });
-
-    return user.save();
+    try {
+      const { password } = createUserDto;
+      const hashedPassword = await this.hashPassword(password);
+      const user = new this.userModel({
+        ...createUserDto,
+        password: hashedPassword,
+      });
+      return user.save();
+    } catch (error) {
+      console.error('Error creating user:', error);
+      throw new Error('Error creating user. Please try again later.');
+    }
   }
 
   async findOneByEmail(email: string): Promise<User> {
-    const user = await this.userModel.findOne({ email }).exec();
-    if (!user) {
-      throw new NotFoundException('User not found');
+    try {
+      const user = await this.userModel.findOne({ email }).exec();
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+      return user;
+    } catch (error) {
+      console.error(`Error fetching user by email ${email}:`, error);
+      throw new Error('Error fetching user by email. Please try again later.');
     }
-    return user;
+  }
+
+  async findOneById(id: string): Promise<User> {
+    try {
+      const user = await this.userModel.findById(id).exec();
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+      return user;
+    } catch (error) {
+      console.error(`Error fetching user by ID ${id}:`, error);
+      throw new Error('Error fetching user by ID. Please try again later.');
+    }
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
-    if (updateUserDto.password) {
-      updateUserDto.password = await this.hashPassword(updateUserDto.password);
+    try {
+      if (updateUserDto.password) {
+        updateUserDto.password = await this.hashPassword(
+          updateUserDto.password,
+        );
+      }
+      return this.userModel
+        .findByIdAndUpdate(id, updateUserDto, { new: true })
+        .exec();
+    } catch (error) {
+      console.error(`Error updating user with ID ${id}:`, error);
+      throw new Error('Error updating user. Please try again later.');
     }
-    return this.userModel
-      .findByIdAndUpdate(id, updateUserDto, { new: true })
-      .exec();
   }
 
   async delete(id: string): Promise<{ message: string }> {
-    const deletedUser = await this.userModel.findByIdAndDelete(id).exec();
-    if (!deletedUser) {
-      throw new NotFoundException(`User with ID ${id} not found`);
+    try {
+      const deletedUser = await this.userModel.findByIdAndDelete(id).exec();
+      if (!deletedUser) {
+        throw new NotFoundException(`User with ID ${id} not found`);
+      }
+      return { message: 'User deleted successfully.' };
+    } catch (error) {
+      console.error(`Error deleting user with ID ${id}:`, error);
+      throw new Error('Error deleting user. Please try again later.');
     }
-    return { message: 'User deleted successfully.' };
   }
 
   async getAllUsers(): Promise<User[]> {
-    return this.userModel.find().exec();
+    try {
+      return this.userModel.find().exec();
+    } catch (error) {
+      console.error('Error fetching all users:', error);
+      throw new Error('Error fetching all users. Please try again later.');
+    }
   }
 }
