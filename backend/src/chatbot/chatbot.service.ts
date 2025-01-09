@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { MenuService } from '../menu/menu.service';
 import { OrderService } from '../orders/orders.service';
 import { JwtService } from '@nestjs/jwt';
@@ -17,9 +17,65 @@ export class ChatbotService {
     try {
       const normalizedMessage = this.normalizeMessage(message);
 
-      // Respuesta para "hola"
-      if (normalizedMessage.includes('hola')) {
-        return '👋 ¡Hola! Esta es una prueba técnica para la empresa Nular. ¡Saludos a todo el equipo!';
+      // Verificar token y obtener usuario
+      let user;
+      if (token) {
+        try {
+          const decoded = this.jwtService.verify(token);
+          user = await this.userService.findOneById(decoded.sub);
+          if (!user) {
+            throw new UnauthorizedException('Usuario no encontrado.');
+          }
+        } catch (error) {
+          console.error('Error al verificar el token:', error.message);
+          return 'Por favor, inicia sesión o crea una cuenta para continuar.';
+        }
+      }
+
+      // Respuesta para "estado de mi orden" o "seguimiento"
+      if (
+        normalizedMessage.includes('estado de mi orden') ||
+        normalizedMessage.includes('seguimiento')
+      ) {
+        if (!user) {
+          return 'Por favor, inicia sesión para ver el estado de tus órdenes.';
+        }
+
+        const activeOrders = await this.orderService.getOrdersByUserId(
+          user._id,
+        );
+        if (activeOrders.length === 0) {
+          return 'No tienes órdenes en proceso.';
+        }
+
+        const ordersWithMenuNames = await Promise.all(
+          activeOrders.map(async (order) => {
+            const itemsWithNames = await Promise.all(
+              order.items.map(async (item) => {
+                const menuItem = await this.menuService.getItemById(
+                  item.productId,
+                );
+                return {
+                  name: menuItem.name,
+                  quantity: item.quantity,
+                  status: order.status,
+                };
+              }),
+            );
+            return itemsWithNames;
+          }),
+        );
+
+        return `📦 Aquí tienes el estado de tus órdenes:\n${ordersWithMenuNames
+          .map((order) =>
+            order
+              .map(
+                (item) =>
+                  `Producto: ${item.name} - Cantidad: ${item.quantity} - Estado: ${item.status}`,
+              )
+              .join('\n'),
+          )
+          .join('\n')}`; // No separar cada orden con una línea en blanco
       }
 
       // Respuesta para "menu" o "menú"
@@ -37,21 +93,7 @@ export class ChatbotService {
         normalizedMessage.includes('pedido') ||
         normalizedMessage.includes('quiero')
       ) {
-        let user;
-        try {
-          if (!token) {
-            return 'Por favor, inicia sesión o crea una cuenta para realizar un pedido.';
-          }
-
-          const decoded = this.jwtService.verify(token);
-          console.log('Decoded token:', decoded); // Para depurar
-
-          user = await this.userService.findOneById(decoded.sub);
-          if (!user) {
-            return 'Usuario no encontrado. Por favor, inicia sesión nuevamente.';
-          }
-        } catch (error) {
-          console.error('Error al verificar el token:', error.message);
+        if (!user) {
           return 'Por favor, inicia sesión o crea una cuenta para realizar un pedido.';
         }
 
@@ -79,34 +121,13 @@ export class ChatbotService {
 
         const order = await this.orderService.create({
           customerName: user.name || 'Cliente Anónimo',
+          userId: user._id, // Asegurarse de que el ID del usuario se pase aquí
           items,
           total,
           status: 'pending',
         });
 
         return `✅ Tu orden ha sido registrada. Total: <b>$${total.toFixed(2)}</b>. ¡Gracias por tu pedido!`;
-      }
-
-      // Respuesta para "estado de mi orden" o "seguimiento"
-      if (
-        normalizedMessage.includes('estado de mi orden') ||
-        normalizedMessage.includes('seguimiento')
-      ) {
-        const activeOrders = await this.orderService.getActiveOrders();
-        if (activeOrders.length === 0) {
-          return 'No tienes órdenes en proceso.';
-        }
-
-        return `📦 Aquí tienes el estado de tus órdenes:\n${activeOrders
-          .map((order) =>
-            order.items
-              .map(
-                (item) =>
-                  `Producto ID: ${item.productId} - Cantidad: ${item.quantity} - Estado: ${order.status}`,
-              )
-              .join('\n'),
-          )
-          .join('\n')}`;
       }
 
       // Respuesta para recomendaciones

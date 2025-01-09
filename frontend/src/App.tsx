@@ -3,7 +3,12 @@ import "./App.css";
 
 const App: React.FC = () => {
   const [message, setMessage] = useState("");
-  const [chat, setChat] = useState<{ sender: string; text: string }[]>([]);
+  const [chat, setChat] = useState<{ sender: string; text: string }[]>([
+    {
+      sender: "bot",
+      text: "👋 ¡Hola! Bienvenido al Chatbot Sushi. Puedes preguntar por el menú, hacer un pedido o consultar el estado de tu orden. ¿En qué puedo ayudarte hoy?",
+    },
+  ]);
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [signupData, setSignupData] = useState({ name: "", email: "", password: "" });
@@ -184,7 +189,7 @@ const App: React.FC = () => {
           <div className="chat-box">
             {chat.map((msg, index) => (
               <div key={index} className={`chat-message ${msg.sender === "user" ? "user" : "bot"}`}>
-                <span dangerouslySetInnerHTML={{ __html: msg.text }} />
+                <span style={{ whiteSpace: "pre-wrap" }} dangerouslySetInnerHTML={{ __html: msg.text }} />
               </div>
             ))}
             {isTyping && <div className="chat-message bot">Chatbot está escribiendo...</div>}

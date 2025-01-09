@@ -13,6 +13,11 @@ export class OrderService {
   ) {}
 
   async create(createOrderDto: CreateOrderDto): Promise<Order> {
+    // Verificación de usuario autenticado
+    if (!createOrderDto.userId) {
+      throw new Error('Por favor, inicia sesión para realizar un pedido.');
+    }
+
     try {
       const itemsWithPrices = await Promise.all(
         createOrderDto.items.map(async (item) => {
@@ -42,6 +47,7 @@ export class OrderService {
         total,
         status: createOrderDto.status || 'pending',
         createdAt: createOrderDto.createdAt || new Date(),
+        userId: createOrderDto.userId,
       });
 
       return order.save();
@@ -80,6 +86,15 @@ export class OrderService {
     } catch (error) {
       console.error('Error fetching active orders:', error);
       throw new Error('Error fetching active orders. Please try again later.');
+    }
+  }
+
+  async getOrdersByUserId(userId: string): Promise<Order[]> {
+    try {
+      return this.orderModel.find({ userId }).exec();
+    } catch (error) {
+      console.error(`Error fetching orders for user ID ${userId}:`, error);
+      throw new Error('Error fetching orders. Please try again later.');
     }
   }
 

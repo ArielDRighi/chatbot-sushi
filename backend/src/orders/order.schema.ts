@@ -42,6 +42,13 @@ export class Order extends Document {
   })
   @Prop({ default: Date.now })
   createdAt: Date;
+
+  @ApiProperty({
+    example: '60d21b4667d0d8992e610c85',
+    description: 'The ID of the user',
+  })
+  @Prop({ required: true })
+  userId: string; // Agregar el ID del usuario
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);
