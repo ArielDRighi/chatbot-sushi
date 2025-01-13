@@ -53,6 +53,9 @@ export class OrderService {
       return order.save();
     } catch (error) {
       console.error('Error creating order:', error);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
       throw new Error('Error creating order. Please try again later.');
     }
   }
@@ -75,6 +78,9 @@ export class OrderService {
       return order;
     } catch (error) {
       console.error(`Error fetching order by ID ${id}:`, error);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
       throw new Error('Error fetching order by ID. Please try again later.');
     }
   }
@@ -148,6 +154,9 @@ export class OrderService {
       return updatedOrder;
     } catch (error) {
       console.error(`Error updating order with ID ${id}:`, error);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
       throw new Error('Error updating order. Please try again later.');
     }
   }
@@ -161,6 +170,9 @@ export class OrderService {
       return deletedOrder;
     } catch (error) {
       console.error(`Error deleting order with ID ${id}:`, error);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
       throw new Error('Error deleting order. Please try again later.');
     }
   }
