@@ -1,7 +1,24 @@
-import { Controller, Post, Body, Headers } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Headers,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { ChatbotService } from './chatbot.service';
-import { ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import {
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiBearerAuth,
+  ApiTags,
+} from '@nestjs/swagger';
+import { JwtAuthGuard } from 'auth/jwt-auth.guard';
 
+@ApiTags('chatbot')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('chatbot')
 export class ChatbotController {
   constructor(private readonly chatbotService: ChatbotService) {}
@@ -12,7 +29,7 @@ export class ChatbotController {
   @ApiBody({ schema: { example: { message: 'Quiero 2 sushi de salmón' } } })
   async handleMessage(
     @Body('message') message: string,
-    @Headers('authorization') authHeader: string,
+    @Headers('Authorization') authHeader: string,
   ): Promise<{ response: string; menuItems?: any[] }> {
     const token = authHeader?.split(' ')[1]; // Extraer el token del encabezado
     const response = await this.chatbotService.handleMessage(message, token);
