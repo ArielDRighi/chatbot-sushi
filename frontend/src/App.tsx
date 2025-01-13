@@ -130,8 +130,8 @@ const App: React.FC = () => {
   return (
     <div className="App">
       <header className="App-header">
-        <h1>Bienvenido a la aplicación</h1>
-        {userName && <p>Hola, {userName}</p>} {/* Mostrar el nombre del usuario logueado */}
+        <h1>Sushi Nular</h1>
+        {userName && <p className="user-greeting">Hola, {userName}</p>} {/* Añadir clase user-greeting */}
         <div className="auth-buttons">
           <button onClick={() => setShowSignup(true)}>Crear Usuario</button>
           <button onClick={() => setShowSignin(true)}>Iniciar Sesión</button>
