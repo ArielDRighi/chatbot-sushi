@@ -51,7 +51,9 @@ export class AuthService {
     }
   }
 
-  async signin(signInDto: SignInDto): Promise<{ accessToken: string }> {
+  async signin(
+    signInDto: SignInDto,
+  ): Promise<{ accessToken: string; userName: string }> {
     const { email, password } = signInDto;
     const user = await this.userService.findOneByEmail(email);
 
@@ -79,6 +81,6 @@ export class AuthService {
     // Si la contraseña es válida, generamos un JWT (accessToken)
     const payload = { sub: user._id, email: user.email };
     const accessToken = this.jwtService.sign(payload);
-    return { accessToken };
+    return { accessToken, userName: user.name };
   }
 }
