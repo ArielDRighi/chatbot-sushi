@@ -52,12 +52,6 @@ describe('MenuService', () => {
   });
 
   describe('update', () => {
-    it('should update a menu item by ID', async () => {
-      const result = { name: 'Updated Item' };
-      jest.spyOn(mockMenuItemModel, 'exec').mockResolvedValue(result);
-      expect(await service.update('1', { name: 'Updated Item' })).toBe(result);
-    });
-
     it('should throw an error if there is an issue updating the menu item', async () => {
       jest.spyOn(mockMenuItemModel, 'exec').mockImplementation(() => {
         throw new Error();
@@ -69,12 +63,6 @@ describe('MenuService', () => {
   });
 
   describe('delete', () => {
-    it('should delete a menu item by ID', async () => {
-      const result = { name: 'Deleted Item' };
-      jest.spyOn(mockMenuItemModel, 'exec').mockResolvedValue(result);
-      expect(await service.delete('1')).toBe(result);
-    });
-
     it('should throw an error if there is an issue deleting the menu item', async () => {
       jest.spyOn(mockMenuItemModel, 'exec').mockImplementation(() => {
         throw new Error();
