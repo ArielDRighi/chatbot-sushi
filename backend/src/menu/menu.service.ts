@@ -1,4 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { MenuItem } from './menu.schema';
@@ -14,16 +20,22 @@ export class MenuService {
       return this.menuItemModel.find().exec();
     } catch (error) {
       console.error('Error fetching all menu items:', error);
-      throw new Error('Error fetching all menu items. Please try again later.');
+      throw new InternalServerErrorException(
+        'Error fetching all menu items. Please try again later.',
+      );
     }
   }
 
   async getItemById(id: string): Promise<MenuItem> {
     try {
-      return this.menuItemModel.findById(id).exec();
+      const item = await this.menuItemModel.findById(id).exec();
+      if (!item) {
+        throw new NotFoundException('Menu item not found');
+      }
+      return item;
     } catch (error) {
       console.error(`Error fetching menu item by ID ${id}:`, error);
-      throw new Error(
+      throw new InternalServerErrorException(
         'Error fetching menu item by ID. Please try again later.',
       );
     }
@@ -63,27 +75,43 @@ export class MenuService {
       return newItem.save();
     } catch (error) {
       console.error('Error creating menu item:', error);
-      throw new Error('Error creating menu item. Please try again later.');
+      throw new InternalServerErrorException(
+        'Error creating menu item. Please try again later.',
+      );
     }
   }
 
   async update(id: string, menuItem: Partial<MenuItem>): Promise<MenuItem> {
     try {
-      return this.menuItemModel
+      const updatedItem = await this.menuItemModel
         .findByIdAndUpdate(id, menuItem, { new: true })
         .exec();
+
+      if (!updatedItem) {
+        throw new NotFoundException('Menu item not found');
+      }
+
+      return updatedItem;
     } catch (error) {
       console.error(`Error updating menu item with ID ${id}:`, error);
-      throw new Error('Error updating menu item. Please try again later.');
+      throw new InternalServerErrorException(
+        'Error updating menu item. Please try again later.',
+      );
     }
   }
 
   async delete(id: string): Promise<MenuItem> {
     try {
-      return this.menuItemModel.findByIdAndDelete(id).exec();
+      const deletedItem = await this.menuItemModel.findByIdAndDelete(id).exec();
+      if (!deletedItem) {
+        throw new NotFoundException(`Menu item with ID ${id} not found.`);
+      }
+      return deletedItem;
     } catch (error) {
       console.error(`Error deleting menu item with ID ${id}:`, error);
-      throw new Error('Error deleting menu item. Please try again later.');
+      throw new InternalServerErrorException(
+        'Error deleting menu item. Please try again later.',
+      );
     }
   }
 
@@ -92,7 +120,10 @@ export class MenuService {
       await this.menuItemModel.deleteMany({}).exec();
     } catch (error) {
       console.error('Error deleting all menu items:', error);
-      throw new Error('Error deleting all menu items. Please try again later.');
+      throw new HttpException(
+        'Error deleting all menu items. Please try again later.',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 

@@ -62,17 +62,13 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password.');
     }
 
-    console.log('Password Provided:', password); // Contraseña proporcionada por el usuario
-    console.log('Password Stored:', user.password);
-
-    // Valor de prueba para comparar
-    const testPassword = 'ernesto'; // La contraseña proporcionada por el usuario
-    const testHash = await bcrypt.hash(testPassword, 10); // Crear un hash conocido para comparar
-    console.log('Test Hash:', testHash); // Log del hash generado con la contraseña de prueba
+    // Verificar que user.password esté definido
+    if (!user.password) {
+      throw new UnauthorizedException('User password is not defined.');
+    }
 
     // Comparar la contraseña proporcionada con el hash almacenado en la base de datos
     const isPasswordValid = await bcrypt.compare(password, user.password);
-    console.log('Password Valid:', isPasswordValid); // Agrega este log
 
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid email or password.');
