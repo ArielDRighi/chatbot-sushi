@@ -1,6 +1,20 @@
 .App {
   text-align: center;
   font-family: "Arial", sans-serif;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* Asegurar que la altura mínima sea el 100% de la ventana */
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans",
+    "Droid Sans", "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-image: url("/public/Sushi_image.jpg"); /* Ruta a tu imagen tileable */
+  background-repeat: repeat; /* Repetir la imagen en ambas direcciones */
+  background-size: 1500px 1500px; /* Ajustar el tamaño de la imagen automáticamente */
 }
 
 .App-header {
@@ -84,6 +98,8 @@ h1 {
   margin: 20px auto; /* Centrar el contenedor del chatbot */
   display: flex;
   flex-direction: column;
+  border: 5px solid #282c34; /* Añadir borde gris */
+  flex-grow: 1; /* Permitir que el contenedor crezca para llenar el espacio disponible */
 }
 
 .chat-box {
@@ -151,6 +167,7 @@ button[type="submit"]:hover {
   justify-content: center;
   gap: 20px;
   margin-top: 20px;
+  margin-bottom: 20px; /* Añadir margen inferior */
 }
 
 .menu-card {
@@ -161,6 +178,7 @@ button[type="submit"]:hover {
   width: 280px;
   text-align: left;
   transition: transform 0.3s, box-shadow 0.3s;
+  border: 5px solid #282c34; /* Añadir borde gris */
 }
 
 .menu-card:hover {

@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import "./App.css";
 
 const App: React.FC = () => {
@@ -6,17 +8,15 @@ const App: React.FC = () => {
   const [chat, setChat] = useState<{ sender: string; text: string }[]>([
     {
       sender: "bot",
-      text: "👋 ¡Hola! Bienvenido al Chatbot Sushi. Puedes preguntar por el menú, hacer un pedido o consultar el estado de tu orden. ¿En qué puedo ayudarte hoy?",
+      text: "👋 ¡Hola! Bienvenido al Chatbot Sushi. 📝 Si necesitas ayuda, escribe 'Ayuda' para ver una lista de comandos disponibles. ¿En qué puedo ayudarte hoy?",
     },
   ]);
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [signupData, setSignupData] = useState({ name: "", email: "", password: "" });
   const [signinData, setSigninData] = useState({ email: "", password: "" });
-  const [signupMessage, setSignupMessage] = useState("");
-  const [signinMessage, setSigninMessage] = useState("");
   const [token, setToken] = useState<string | null>(null);
-  const [userName, setUserName] = useState<string | null>(null); // Estado para almacenar el nombre del usuario
+  const [userName, setUserName] = useState<string | null>(null);
   const [showSignup, setShowSignup] = useState(false);
   const [showSignin, setShowSignin] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -34,7 +34,7 @@ const App: React.FC = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }), // Agregar el token si está disponible
+          ...(token && { Authorization: `Bearer ${token}` }),
         },
         body: JSON.stringify({ message }),
       });
@@ -50,10 +50,10 @@ const App: React.FC = () => {
         setChat((prevChat) => [...prevChat, { sender: "bot", text: data.response }]);
       }
 
-      // Desloguear al usuario si el mensaje es "chau" o "adios"
       if (message.toLowerCase().includes("chau") || message.toLowerCase().includes("adios")) {
         setToken(null);
         setUserName(null);
+        toast.info("Sesión cerrada exitosamente.");
       }
     } catch (error) {
       console.error("Error al enviar el mensaje:", error);
@@ -64,7 +64,6 @@ const App: React.FC = () => {
     }
   };
 
-  // Manejo de SignIn
   const handleSigninChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setSigninData((prevData) => ({ ...prevData, [name]: value }));
@@ -84,21 +83,20 @@ const App: React.FC = () => {
       const data = await res.json();
 
       if (res.ok) {
-        setToken(data.accessToken); // Guarda el token en el estado
-        setUserName(data.userName); // Guarda el nombre del usuario en el estado
-        setSigninMessage("Inicio de sesión exitoso.");
-        setSigninData({ email: "", password: "" }); // Limpiar datos del formulario
-        setShowSignin(false); // Cerrar el popup
+        setToken(data.accessToken);
+        setUserName(data.userName);
+        toast.success("Sesión iniciada exitosamente.");
+        setSigninData({ email: "", password: "" });
+        setShowSignin(false);
       } else {
-        setSigninMessage(data.message || "Error al iniciar sesión.");
+        toast.error(data.message || "Credenciales incorrectas.");
       }
     } catch (error) {
       console.error("Error al conectar con el servidor:", error);
-      setSigninMessage("Error al conectar con el servidor.");
+      toast.error("Error al conectar con el servidor.");
     }
   };
 
-  // Manejo de SignUp
   const handleSignupChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setSignupData((prevData) => ({ ...prevData, [name]: value }));
@@ -118,14 +116,15 @@ const App: React.FC = () => {
       const data = await res.json();
 
       if (res.ok) {
-        setSignupMessage(data.message);
-        setSignupData({ name: "", email: "", password: "" }); // Limpiar datos del formulario
-        setShowSignup(false); // Cerrar el popup
+        toast.success("Usuario creado exitosamente.");
+        setSignupData({ name: "", email: "", password: "" });
+        setShowSignup(false);
+        setShowSignin(true); // Abrir el popup de inicio de sesión
       } else {
-        setSignupMessage(data.message || "Error al crear el usuario.");
+        toast.error(data.message || "Error al crear el usuario.");
       }
     } catch (error) {
-      setSignupMessage("Error al conectar con el servidor.");
+      toast.error("Error al conectar con el servidor.");
     }
   };
 
@@ -135,16 +134,16 @@ const App: React.FC = () => {
 
   return (
     <div className="App">
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
       <header className="App-header">
         <h1>Sushi Nular</h1>
-        {userName && <p className="user-greeting">Hola, {userName}</p>} {/* Añadir clase user-greeting */}
+        {userName && <p className="user-greeting">Hola, {userName}</p>}
         <div className="auth-buttons">
           <button onClick={() => setShowSignup(true)}>Crear Usuario</button>
           <button onClick={() => setShowSignin(true)}>Iniciar Sesión</button>
         </div>
       </header>
 
-      {/* Formulario de crear usuario */}
       {showSignup && (
         <div className="popup">
           <div className="popup-content">
@@ -179,12 +178,10 @@ const App: React.FC = () => {
               />
               <button type="submit">Crear Usuario</button>
             </form>
-            {signupMessage && <p>{signupMessage}</p>}
           </div>
         </div>
       )}
 
-      {/* Formulario de iniciar sesión */}
       {showSignin && (
         <div className="popup">
           <div className="popup-content">
@@ -211,12 +208,10 @@ const App: React.FC = () => {
               />
               <button type="submit">Iniciar Sesión</button>
             </form>
-            {signinMessage && <p>{signinMessage}</p>}
           </div>
         </div>
       )}
 
-      {/* Chatbot */}
       <div className="chat-container">
         <h2>Chatbot Sushi</h2>
         <div className="chat-box">
@@ -239,7 +234,6 @@ const App: React.FC = () => {
         </form>
       </div>
 
-      {/* Menú */}
       {menuItems.length > 0 && (
         <div className="menu-container">
           {menuItems.map((item, index) => (

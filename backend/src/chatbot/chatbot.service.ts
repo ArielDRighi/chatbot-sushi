@@ -32,6 +32,11 @@ export class ChatbotService {
         }
       }
 
+      // Comando de ayuda
+      if (normalizedMessage.includes('ayuda')) {
+        return this.getHelpMessage();
+      }
+
       // Saludo inicial
       if (normalizedMessage.includes('hola')) {
         return '¡Este es un challenge técnico para Nular, saludos a todo el equipo!';
@@ -138,23 +143,44 @@ export class ChatbotService {
     return menuItems
       .map(
         (item) =>
-          `<div><b>${item.name}</b>: $${item.price} - ${item.description}</div>`,
+          `<div style="text-align: left;"><b>${item.name}</b>: $${item.price} - ${item.description}</div>`,
       )
-      .join('\n');
+      .join(''); // Eliminar el renglón vacío entre ítems
   }
 
   private extractOrderDetails(
     message: string,
   ): { itemName: string; quantity: number }[] {
-    const orderRegex = /(\d+)\s+(sushi\s+de\s+\w+)/gi;
+    const numberWords: { [key: string]: number } = {
+      uno: 1,
+      una: 1,
+      un: 1,
+      dos: 2,
+      tres: 3,
+      cuatro: 4,
+      cinco: 5,
+      seis: 6,
+      siete: 7,
+      ocho: 8,
+      nueve: 9,
+      diez: 10,
+    };
+
+    const orderRegex =
+      /(\d+|uno|una|un|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\s+(sushi\s+de\s+\w+)/gi;
     const matches = [...message.matchAll(orderRegex)];
 
     if (matches.length === 0) return [];
 
-    return matches.map((match) => ({
-      quantity: parseInt(match[1], 10),
-      itemName: match[2].trim(),
-    }));
+    return matches.map((match) => {
+      const quantity = isNaN(Number(match[1]))
+        ? numberWords[match[1].toLowerCase()]
+        : parseInt(match[1], 10);
+      return {
+        quantity,
+        itemName: match[2].trim(),
+      };
+    });
   }
 
   private containsOrderStatusQuery(message: string): boolean {
@@ -187,11 +213,11 @@ export class ChatbotService {
         order
           .map(
             (item) =>
-              `Producto: ${item.name} - Cantidad: ${item.quantity} - Estado: ${item.status}`,
+              `<div style="text-align: left;"><b>Producto:</b> ${item.name} - <b>Cantidad:</b> ${item.quantity} - <b>Estado:</b> ${item.status}</div>`,
           )
-          .join('\n'),
+          .join(''),
       )
-      .join('\n')}`;
+      .join('')}`;
   }
 
   private containsMenuQuery(message: string): boolean {
@@ -202,7 +228,8 @@ export class ChatbotService {
     return (
       message.includes('orden') ||
       message.includes('pedido') ||
-      message.includes('quiero')
+      message.includes('quiero') ||
+      message.includes('quisiera')
     );
   }
 
@@ -243,6 +270,7 @@ export class ChatbotService {
       message.includes('recomendar') ||
       message.includes('recomendacion') ||
       message.includes('recomiendas') ||
+      message.includes('sugerencia') ||
       message.includes('que me recomiendas')
     );
   }
@@ -258,5 +286,21 @@ export class ChatbotService {
 
   private containsGoodbyeQuery(message: string): boolean {
     return message.includes('adios') || message.includes('chau');
+  }
+
+  private getHelpMessage(): string {
+    return (
+      '🤖 <b>Aquí tienes algunos comandos que puedes usar para interactuar conmigo:</b>' +
+      '<ul style="text-align: left;">' +
+      '<li>💬 <b>"Hola"</b>: Saludo inicial.</li>' +
+      '<li>📋 <b>"Menú"</b>: Mostrar el menú.</li>' +
+      '<li>📦 <b>"Estado de mi orden"</b>: Ver el estado de tus órdenes.</li>' +
+      '<li>📝 <b>"Quiero [cantidad] sushi de [tipo]"</b>: Realizar un pedido.<br><i>Ejemplo: "Quiero 2 sushi de salmón y 3 sushi de atún"</i></li>' +
+      '<li>🔍 <b>"Que me recomiendas"</b>: Obtener recomendaciones de menú.</li>' +
+      '<li>🕒 <b>"Horarios"</b>: Consultar los horarios de apertura.</li>' +
+      '<li>🙏 <b>"Gracias"</b>: Agradecer.</li>' +
+      '<li>👋 <b>"Adios"</b>: Despedirse y cerrar sesión.</li>' +
+      '</ul>'
+    );
   }
 }
