@@ -28,15 +28,17 @@ export class ChatbotService {
           }
         } catch (error) {
           console.error('Error al verificar el token:', error.message);
-          return 'Por favor, inicia sesión o crea una cuenta para continuar.';
+          // No retornar aquí, permitir que continúe para otros mensajes
         }
       }
 
+      // Saludo inicial
+      if (normalizedMessage.includes('hola')) {
+        return '¡Este es un challenge técnico para Nular, saludos a todo el equipo!';
+      }
+
       // Respuesta para "estado de mi orden" o "seguimiento"
-      if (
-        normalizedMessage.includes('estado de mi orden') ||
-        normalizedMessage.includes('seguimiento')
-      ) {
+      if (this.containsOrderStatusQuery(normalizedMessage)) {
         if (!user) {
           return 'Por favor, inicia sesión para ver el estado de tus órdenes.';
         }
@@ -48,51 +50,20 @@ export class ChatbotService {
           return 'No tienes órdenes en proceso.';
         }
 
-        const ordersWithMenuNames = await Promise.all(
-          activeOrders.map(async (order) => {
-            const itemsWithNames = await Promise.all(
-              order.items.map(async (item) => {
-                const menuItem = await this.menuService.getItemById(
-                  item.productId,
-                );
-                return {
-                  name: menuItem.name,
-                  quantity: item.quantity,
-                  status: order.status,
-                };
-              }),
-            );
-            return itemsWithNames;
-          }),
-        );
+        const ordersWithMenuNames =
+          await this.getOrdersWithMenuItems(activeOrders);
 
-        return `📦 Aquí tienes el estado de tus órdenes:\n${ordersWithMenuNames
-          .map((order) =>
-            order
-              .map(
-                (item) =>
-                  `Producto: ${item.name} - Cantidad: ${item.quantity} - Estado: ${item.status}`,
-              )
-              .join('\n'),
-          )
-          .join('\n')}`; // No separar cada orden con una línea en blanco
+        return this.formatOrderStatusResponse(ordersWithMenuNames);
       }
 
       // Respuesta para "menu" o "menú"
-      if (
-        normalizedMessage.includes('menu') ||
-        normalizedMessage.includes('menú')
-      ) {
+      if (this.containsMenuQuery(normalizedMessage)) {
         const menuItems = await this.menuService.getAllItems();
         return `🍣 A continuación te presento el menú:\n${this.formatMenuResponse(menuItems)}`;
       }
 
       // Requiere token solo para realizar una orden
-      if (
-        normalizedMessage.includes('orden') ||
-        normalizedMessage.includes('pedido') ||
-        normalizedMessage.includes('quiero')
-      ) {
+      if (this.containsOrderRequest(normalizedMessage)) {
         if (!user) {
           return 'Por favor, inicia sesión o crea una cuenta para realizar un pedido.';
         }
@@ -102,41 +73,17 @@ export class ChatbotService {
           return 'Por favor, especifica qué deseas ordenar. Ejemplo: "Quiero 2 sushi de salmón".';
         }
 
-        let items = [];
-        let total = 0;
+        const { items, total } = await this.processOrder(orderDetails, user);
 
-        for (const detail of orderDetails) {
-          const menuItem = await this.menuService.getItemByName(
-            detail.itemName,
-          );
-          if (!menuItem) {
-            return `Lo siento, no encontré un plato llamado "${detail.itemName}". Por favor, verifica el menú.`;
-          }
-          items.push({
-            productId: menuItem._id.toString(),
-            quantity: detail.quantity,
-          });
-          total += menuItem.price * detail.quantity;
+        if (items.length === 0) {
+          return 'Lo siento, no encontré un plato en el menú. Intenta de nuevo.';
         }
-
-        const order = await this.orderService.create({
-          customerName: user.name || 'Cliente Anónimo',
-          userId: user._id, // Asegurarse de que el ID del usuario se pase aquí
-          items,
-          total,
-          status: 'pending',
-        });
 
         return `✅ Tu orden ha sido registrada. Total: <b>$${total.toFixed(2)}</b>. ¡Gracias por tu pedido!`;
       }
 
       // Respuesta para recomendaciones
-      if (
-        normalizedMessage.includes('recomendar') ||
-        normalizedMessage.includes('recomendacion') ||
-        normalizedMessage.includes('recomiendas') ||
-        normalizedMessage.includes('que me recomiendas')
-      ) {
+      if (this.containsRecommendationQuery(normalizedMessage)) {
         const recommendations = await this.menuService.getAllItems();
         if (recommendations.length === 0) {
           return `No encontré platos para recomendar. ¿Quieres buscar algo más?`;
@@ -146,12 +93,7 @@ export class ChatbotService {
       }
 
       // Respuesta para horarios
-      if (
-        normalizedMessage.includes('horarios') ||
-        normalizedMessage.includes('horario') ||
-        normalizedMessage.includes('abierto') ||
-        normalizedMessage.includes('cerrado')
-      ) {
+      if (this.containsScheduleQuery(normalizedMessage)) {
         return '🕒 Estamos abiertos de lunes a domingo, de 12:00 a 22:00.';
       }
 
@@ -161,10 +103,7 @@ export class ChatbotService {
       }
 
       // Respuesta para despedida
-      if (
-        normalizedMessage.includes('adios') ||
-        normalizedMessage.includes('chau')
-      ) {
+      if (this.containsGoodbyeQuery(normalizedMessage)) {
         return '👋 ¡Adiós! ¡Que tengas un excelente día!';
       }
 
@@ -216,5 +155,108 @@ export class ChatbotService {
       quantity: parseInt(match[1], 10),
       itemName: match[2].trim(),
     }));
+  }
+
+  private containsOrderStatusQuery(message: string): boolean {
+    return (
+      message.includes('estado de mi orden') || message.includes('seguimiento')
+    );
+  }
+
+  private async getOrdersWithMenuItems(orders: any[]): Promise<any[]> {
+    return Promise.all(
+      orders.map(async (order) => {
+        const itemsWithNames = await Promise.all(
+          order.items.map(async (item) => {
+            const menuItem = await this.menuService.getItemById(item.productId);
+            return {
+              name: menuItem.name,
+              quantity: item.quantity,
+              status: order.status,
+            };
+          }),
+        );
+        return itemsWithNames;
+      }),
+    );
+  }
+
+  private formatOrderStatusResponse(ordersWithMenuNames: any[]): string {
+    return `📦 Aquí tienes el estado de tus órdenes:\n${ordersWithMenuNames
+      .map((order) =>
+        order
+          .map(
+            (item) =>
+              `Producto: ${item.name} - Cantidad: ${item.quantity} - Estado: ${item.status}`,
+          )
+          .join('\n'),
+      )
+      .join('\n')}`;
+  }
+
+  private containsMenuQuery(message: string): boolean {
+    return message.includes('menu') || message.includes('menú');
+  }
+
+  private containsOrderRequest(message: string): boolean {
+    return (
+      message.includes('orden') ||
+      message.includes('pedido') ||
+      message.includes('quiero')
+    );
+  }
+
+  private async processOrder(
+    orderDetails: any[],
+    user: any,
+  ): Promise<{ items: any[]; total: number }> {
+    let items = [];
+    let total = 0;
+
+    for (const detail of orderDetails) {
+      const menuItem = await this.menuService.getItemByName(detail.itemName);
+      if (!menuItem) {
+        continue;
+      }
+      items.push({
+        productId: menuItem._id.toString(),
+        quantity: detail.quantity,
+      });
+      total += menuItem.price * detail.quantity;
+    }
+
+    if (items.length > 0) {
+      await this.orderService.create({
+        customerName: user.name || 'Cliente Anónimo',
+        userId: user._id, // Asegurarse de que el ID del usuario se pase aquí
+        items,
+        total,
+        status: 'pending',
+      });
+    }
+
+    return { items, total };
+  }
+
+  private containsRecommendationQuery(message: string): boolean {
+    return (
+      message.includes('recomendar') ||
+      message.includes('recomendacion') ||
+      message.includes('recomiendas') ||
+      message.includes('que me recomiendas')
+    );
+  }
+
+  private containsScheduleQuery(message: string): boolean {
+    return (
+      message.includes('horarios') ||
+      message.includes('horario') ||
+      message.includes('abierto') ||
+      message.includes('cerrado')
+    );
+  }
+
+  private containsGoodbyeQuery(message: string): boolean {
+    return message.includes('adios') || message.includes('chau');
   }
 }
