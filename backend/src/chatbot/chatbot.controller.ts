@@ -1,24 +1,8 @@
-import {
-  Controller,
-  Post,
-  Body,
-  Headers,
-  UseGuards,
-  Request,
-} from '@nestjs/common';
+import { Controller, Post, Body, Headers } from '@nestjs/common';
 import { ChatbotService } from './chatbot.service';
-import {
-  ApiOperation,
-  ApiResponse,
-  ApiBody,
-  ApiBearerAuth,
-  ApiTags,
-} from '@nestjs/swagger';
-import { JwtAuthGuard } from 'auth/jwt-auth.guard';
+import { ApiOperation, ApiResponse, ApiBody, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('chatbot')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 @Controller('chatbot')
 export class ChatbotController {
   constructor(private readonly chatbotService: ChatbotService) {}

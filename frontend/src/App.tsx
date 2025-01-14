@@ -49,6 +49,12 @@ const App: React.FC = () => {
       } else {
         setChat((prevChat) => [...prevChat, { sender: "bot", text: data.response }]);
       }
+
+      // Desloguear al usuario si el mensaje es "chau" o "adios"
+      if (message.toLowerCase().includes("chau") || message.toLowerCase().includes("adios")) {
+        setToken(null);
+        setUserName(null);
+      }
     } catch (error) {
       console.error("Error al enviar el mensaje:", error);
       setChat((prevChat) => [...prevChat, { sender: "bot", text: "Error al conectar con el servidor." }]);
