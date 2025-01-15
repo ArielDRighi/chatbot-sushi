@@ -1,13 +1,14 @@
+import { ApiProperty } from '@nestjs/swagger';
 import {
+  IsNotEmpty,
   IsString,
   IsArray,
-  IsNumber,
-  IsOptional,
   ValidateNested,
-  IsDate,
+  IsOptional,
+  IsDateString,
+  IsNumber,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ApiProperty } from '@nestjs/swagger';
 
 class OrderItemDto {
   @ApiProperty({
@@ -15,19 +16,18 @@ class OrderItemDto {
     description: 'The ID of the product',
   })
   @IsString()
+  @IsNotEmpty()
   productId: string;
 
   @ApiProperty({ example: 2, description: 'The quantity of the product' })
-  @IsNumber()
+  @IsNotEmpty()
   quantity: number;
 }
 
 export class CreateOrderDto {
-  @ApiProperty({
-    example: 'Juan Pérez',
-    description: 'The name of the customer',
-  })
+  @ApiProperty({ example: 'John Doe', description: 'The name of the customer' })
   @IsString()
+  @IsNotEmpty()
   customerName: string;
 
   @ApiProperty({ type: [OrderItemDto], description: 'The items in the order' })
@@ -35,10 +35,6 @@ export class CreateOrderDto {
   @ValidateNested({ each: true })
   @Type(() => OrderItemDto)
   items: OrderItemDto[];
-
-  @ApiProperty({ example: 29.97, description: 'The total price of the order' })
-  @IsNumber()
-  total: number;
 
   @ApiProperty({
     example: 'pending',
@@ -50,18 +46,27 @@ export class CreateOrderDto {
   status?: string;
 
   @ApiProperty({
-    example: '2023-10-01T00:00:00.000Z',
+    example: '2023-10-01T00:00:00Z',
     description: 'The creation date of the order',
     required: false,
   })
-  @IsDate()
+  @IsDateString()
   @IsOptional()
   createdAt?: Date;
 
   @ApiProperty({
     example: '60d21b4667d0d8992e610c85',
-    description: 'The ID of the user',
+    description: 'The ID of the user who placed the order',
   })
   @IsString()
-  userId: string; // Agregar el ID del usuario
+  @IsNotEmpty()
+  userId: string;
+
+  @ApiProperty({
+    example: 29.97,
+    description: 'The total price of the order',
+  })
+  @IsNumber()
+  @IsNotEmpty()
+  total: number;
 }

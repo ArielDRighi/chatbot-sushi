@@ -1,9 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { UserRole } from '../user.roles.enum';
-import { IsNotEmpty, IsEnum, IsEmail } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsEnum,
+  IsEmail,
+  IsString,
+  MinLength,
+  IsOptional,
+} from 'class-validator';
 
 export class CreateUserDto {
   @ApiProperty({ example: 'John Doe', description: 'The name of the user' })
+  @IsString()
+  @IsNotEmpty()
   name: string;
 
   @ApiProperty({
@@ -11,18 +20,24 @@ export class CreateUserDto {
     description: 'The email of the user',
   })
   @IsEmail()
+  @IsNotEmpty()
   email: string;
 
   @ApiProperty({
     example: 'password123',
     description: 'The password of the user',
   })
+  @IsString()
+  @MinLength(6)
+  @IsNotEmpty()
   password: string;
 
   @ApiProperty({
     example: UserRole.CUSTOMER,
     description: 'The role of the user',
   })
+  @IsEnum(UserRole)
+  @IsNotEmpty()
   role: UserRole;
 }
 
@@ -32,6 +47,8 @@ export class UpdateUserDto {
     description: 'The name of the user',
     required: false,
   })
+  @IsString()
+  @IsOptional()
   name?: string;
 
   @ApiProperty({
@@ -40,6 +57,7 @@ export class UpdateUserDto {
     required: false,
   })
   @IsEmail()
+  @IsOptional()
   email?: string;
 
   @ApiProperty({
@@ -47,6 +65,9 @@ export class UpdateUserDto {
     description: 'The password of the user',
     required: false,
   })
+  @IsString()
+  @MinLength(6)
+  @IsOptional()
   password?: string;
 
   @ApiProperty({
@@ -54,7 +75,7 @@ export class UpdateUserDto {
     description: 'The role of the user',
     required: false,
   })
-  @IsNotEmpty()
   @IsEnum(UserRole)
+  @IsOptional()
   role?: UserRole;
 }
