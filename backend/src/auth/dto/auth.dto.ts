@@ -27,7 +27,7 @@ export class SignUpDto {
 
 export class SignInDto {
   @ApiProperty({
-    example: 'john.doe@example.com',
+    example: 'ariel.righi@example.com',
     description: 'The email of the user',
   })
   @IsEmail()

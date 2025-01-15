@@ -317,6 +317,7 @@ export class ChatbotService {
       message.includes('horarios') ||
       message.includes('horario') ||
       message.includes('abierto') ||
+      message.includes('abiertos') ||
       message.includes('cerrado')
     );
   }
