@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { MenuService } from '../menu/menu.service';
 import { OrderService } from '../orders/orders.service';
 import { JwtService } from '@nestjs/jwt';
-import { UserService } from 'users/user.service';
+import { UserService } from '../users/user.service';
 
 @Injectable()
 export class ChatbotService {
@@ -64,7 +64,9 @@ export class ChatbotService {
       // Respuesta para "menu" o "menú"
       if (this.containsMenuQuery(normalizedMessage)) {
         const menuItems = await this.menuService.getAllItems();
-        return `🍣 A continuación te presento el menú:\n${this.formatMenuResponse(menuItems)}`;
+        return `🍣 A continuación te presento el menú:\n${this.formatMenuResponse(
+          menuItems,
+        )}`;
       }
 
       // Requiere token solo para realizar una orden
@@ -73,18 +75,24 @@ export class ChatbotService {
           return 'Por favor, inicia sesión o crea una cuenta para realizar un pedido.';
         }
 
-        const orderDetails = this.extractOrderDetails(normalizedMessage);
-        if (!orderDetails || orderDetails.length === 0) {
-          return 'Por favor, especifica qué deseas ordenar. Ejemplo: "Quiero 2 sushi de salmón".';
+        try {
+          const orderDetails = this.extractOrderDetails(normalizedMessage);
+          if (!orderDetails || orderDetails.length === 0) {
+            return 'Por favor, especifica qué deseas ordenar. Ejemplo: "Quiero 2 sushi de salmón".';
+          }
+
+          const { items, total } = await this.processOrder(orderDetails, user);
+
+          if (items.length === 0) {
+            return 'Lo siento, no encontré un plato en el menú. Intenta de nuevo.';
+          }
+
+          return `✅ Tu orden ha sido registrada. Total: <b>$${total.toFixed(
+            2,
+          )}</b>. ¡Gracias por tu pedido!`;
+        } catch (error) {
+          return error.message;
         }
-
-        const { items, total } = await this.processOrder(orderDetails, user);
-
-        if (items.length === 0) {
-          return 'Lo siento, no encontré un plato en el menú. Intenta de nuevo.';
-        }
-
-        return `✅ Tu orden ha sido registrada. Total: <b>$${total.toFixed(2)}</b>. ¡Gracias por tu pedido!`;
       }
 
       // Respuesta para recomendaciones
@@ -94,7 +102,9 @@ export class ChatbotService {
           return `No encontré platos para recomendar. ¿Quieres buscar algo más?`;
         }
 
-        return `🔍 Aquí tienes algunas recomendaciones:\n${this.formatMenuResponse(recommendations)}`;
+        return `🔍 Aquí tienes algunas recomendaciones:\n${this.formatMenuResponse(
+          recommendations,
+        )}`;
       }
 
       // Respuesta para horarios
@@ -170,9 +180,19 @@ export class ChatbotService {
       /(\d+|uno|una|un|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\s+(sushi\s+de\s+\w+)/gi;
     const matches = [...message.matchAll(orderRegex)];
 
+    // Verificar que cada pedido separado por "y" contenga la palabra "sushi"
+    const parts = message.split('y');
+    for (const part of parts) {
+      if (!part.includes('sushi')) {
+        throw new Error(
+          'Formato de pedido incorrecto. Por favor, usa el formato: "Quiero [cantidad] sushi de [tipo]".',
+        );
+      }
+    }
+
     if (matches.length === 0) return [];
 
-    return matches.map((match) => {
+    const orderDetails = matches.map((match) => {
       const quantity = isNaN(Number(match[1]))
         ? numberWords[match[1].toLowerCase()]
         : parseInt(match[1], 10);
@@ -181,6 +201,19 @@ export class ChatbotService {
         itemName: match[2].trim(),
       };
     });
+
+    // Validar que cada pedido tenga el formato correcto
+    const invalidOrders = orderDetails.filter(
+      (order) => !order.itemName || !order.quantity,
+    );
+
+    if (invalidOrders.length > 0 || orderDetails.length !== matches.length) {
+      throw new Error(
+        'Formato de pedido incorrecto. Por favor, usa el formato: "Quiero [cantidad] sushi de [tipo]".',
+      );
+    }
+
+    return orderDetails;
   }
 
   private containsOrderStatusQuery(message: string): boolean {

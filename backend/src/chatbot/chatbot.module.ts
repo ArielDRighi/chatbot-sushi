@@ -7,7 +7,7 @@ import { OrderService } from '../orders/orders.service';
 import { MenuService } from '../menu/menu.service';
 import { UserService } from '../users/user.service';
 import { AuthModule } from '../auth/auth.module';
-import { UsersModule } from 'users/user.module';
+import { UsersModule } from '../users/user.module';
 
 @Module({
   imports: [MenuModule, OrderModule, AuthModule, UsersModule],
