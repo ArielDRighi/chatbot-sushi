@@ -19,13 +19,13 @@ export class SignUpDto {
 
 export class SignInDto {
   @ApiProperty({
-    example: 'admin@example.com',
+    example: 'ariel.righi@example.com',
     description: 'The email of the user',
   })
   email: string;
 
   @ApiProperty({
-    example: 'admin123',
+    example: 'password123',
     description: 'The password of the user',
   })
   password: string;
