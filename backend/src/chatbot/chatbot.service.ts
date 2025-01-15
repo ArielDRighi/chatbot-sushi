@@ -39,6 +39,16 @@ export class ChatbotService {
 
       // Saludo inicial
       if (normalizedMessage.includes('hola')) {
+        if (
+          normalizedMessage.includes('pedido') &&
+          normalizedMessage.includes('orientar')
+        ) {
+          const recommendations = await this.menuService.getAllItems();
+          if (recommendations.length === 0) {
+            return `No encontré platos para recomendar. ¿Quieres buscar algo más?`;
+          }
+          return `🔍 Aquí tienes algunas recomendaciones:\n${this.formatMenuResponse(recommendations)}`;
+        }
         return '¡Este es un challenge técnico para Nular, saludos a todo el equipo!';
       }
 
@@ -64,9 +74,7 @@ export class ChatbotService {
       // Respuesta para "menu" o "menú"
       if (this.containsMenuQuery(normalizedMessage)) {
         const menuItems = await this.menuService.getAllItems();
-        return `🍣 A continuación te presento el menú:\n${this.formatMenuResponse(
-          menuItems,
-        )}`;
+        return `🍣 A continuación te presento el menú:\n${this.formatMenuResponse(menuItems)}`;
       }
 
       // Requiere token solo para realizar una orden
@@ -87,9 +95,7 @@ export class ChatbotService {
             return 'Lo siento, no encontré un plato en el menú. Intenta de nuevo.';
           }
 
-          return `✅ Tu orden ha sido registrada. Total: <b>$${total.toFixed(
-            2,
-          )}</b>. ¡Gracias por tu pedido!`;
+          return `✅ Tu orden ha sido registrada. Total: <b>$${total.toFixed(2)}</b>. ¡Gracias por tu pedido!`;
         } catch (error) {
           return error.message;
         }
@@ -102,9 +108,7 @@ export class ChatbotService {
           return `No encontré platos para recomendar. ¿Quieres buscar algo más?`;
         }
 
-        return `🔍 Aquí tienes algunas recomendaciones:\n${this.formatMenuResponse(
-          recommendations,
-        )}`;
+        return `🔍 Aquí tienes algunas recomendaciones:\n${this.formatMenuResponse(recommendations)}`;
       }
 
       // Respuesta para horarios
